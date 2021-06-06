@@ -21,7 +21,9 @@
     <h2>MTL Shareholders</h2>
     <p>MTL supply: <span id="mtl_supply_text">0</span></p>
     <p>MTL distributed: <span id="mtl_distributed_text">0</span></p>
-    <table id="mtl_holders_table"><th>Tokens</th><th>Account</th></table>
+    <table id="mtl_holders_table">
+      <th>Power</th><th>Account</th><th>Explanation</th>
+    </table>
 
     <script>
       function collectPages(onPage, atEnd) {
@@ -68,13 +70,21 @@
           ? 'MTL Treasury'
           : '…' + accountRecord.account_id.substring(52);
 
+        const share = accountRecord.mtl_balance / mtl_distributed;
+
+        const power = share;
+
+        const explanation =
+          `balance = ${accountRecord.mtl_balance} MTL, share of distributed MTL = ${share * 100}%`;
+
         const tr =
           mtl_holders_table.appendChild(document.createElement('tr'));
-        tr.classList.add('item');
         tr.appendChild(document.createElement('td'))
-          .appendChild(document.createTextNode(accountRecord.mtl_balance));
+          .appendChild(document.createTextNode(`${share * 100}%`));
         tr.appendChild(document.createElement('td'))
           .appendChild(document.createTextNode(name));
+        tr.appendChild(document.createElement('td'))
+          .appendChild(document.createTextNode(explanation));
       }
 
       function finishMtlHoldersTable() {
