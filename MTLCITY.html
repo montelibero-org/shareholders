@@ -10,24 +10,42 @@
   </head>
   <body>
     <h2>MTLCITY Shareholders</h2>
-    <p>Supply: <span id="supply_text">0</span></p>
-    <p>Distributed: <span id="distributed_text">0</span></p>
+    <p>MTL Supply: <span id="mtl_supply_text">0</span></p>
+    <p>MTL Distributed: <span id="mtl_distributed_text">0</span></p>
+    <p>MTLCITY Supply: <span id="mtlcity_supply_text">0</span></p>
     <table id="holders_table">
       <th>Power</th><th>Account</th><th>Explanation</th>
     </table>
     <script>
-      server
-        .accounts()
-        .forAsset(MTLCITY)
-        .call()
-        .then(
-          collectPages(
-            MTLCITY,
-            MTLCITY_TREASURY,
-            appendHolders(supply_text, distributed_text),
-            finishHoldersTable(holders_table)
-          )
-        );
+      function collect_mtl() {
+        server
+          .accounts()
+          .forAsset(MTL)
+          .call()
+          .then(
+            collectPages(
+              MTL,
+              appendHolders(mtl_supply_text, mtl_distributed_text),
+              collect_mtlcity
+            )
+          );
+      }
+
+      function collect_mtlcity(mtl_collector) {
+        server
+          .accounts()
+          .forAsset(MTLCITY)
+          .call()
+          .then(
+            collectPages(
+              MTLCITY,
+              appendHolders(mtlcity_supply_text),
+              makeHoldersTable(holders_table, mtl_collector)
+            )
+          );
+      }
+
+      collect_mtl();
     </script>
   </body>
 </html>

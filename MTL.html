@@ -23,9 +23,8 @@
         .then(
           collectPages(
             MTL,
-            MTL_TREASURY,
             appendHolders(supply_text, distributed_text),
-            finishHoldersTable(holders_table)
+            makeHoldersTable(holders_table)
           )
         );
     </script>
