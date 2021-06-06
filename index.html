@@ -40,7 +40,7 @@
       let mtl_holders = [];
       let mtl_supply = 0;
       let mtl_distributed = 0;
-      function appendMtlHoldersTable(collectionPage) {
+      function appendMtlHolders(collectionPage) {
         mtl_holders = mtl_holders.concat(collectionPage.records);
         for (const accountRecord of collectionPage.records) {
           const [balance] =
@@ -51,36 +51,43 @@
                 asset_code == MTL_CODE && asset_issuer == MTL_ISSUER
             )
             .map(({balance}) => +balance);
+          accountRecord.mtl_balance = balance;
 
-            mtl_supply += balance;
+          mtl_supply += balance;
           mtl_supply_text.innerText = mtl_supply;
 
           if (accountRecord.account_id != MTL_TREASURY)
             mtl_distributed += balance;
           mtl_distributed_text.innerText = mtl_distributed;
-
-          const name =
-            accountRecord.account_id == MTL_TREASURY
-            ? 'MTL Treasury'
-            : '…' + accountRecord.account_id.substring(52);
-
-          const tr =
-            mtl_holders_table.appendChild(document.createElement('tr'));
-          tr.appendChild(document.createElement('td'))
-            .appendChild(document.createTextNode(balance));
-          tr.appendChild(document.createElement('td'))
-            .appendChild(document.createTextNode(name));
         }
       }
 
+      function appendMtlHoldersTableRow(accountRecord) {
+        const name =
+          accountRecord.account_id == MTL_TREASURY
+          ? 'MTL Treasury'
+          : '…' + accountRecord.account_id.substring(52);
+
+        const tr =
+          mtl_holders_table.appendChild(document.createElement('tr'));
+        tr.classList.add('item');
+        tr.appendChild(document.createElement('td'))
+          .appendChild(document.createTextNode(accountRecord.mtl_balance));
+        tr.appendChild(document.createElement('td'))
+          .appendChild(document.createTextNode(name));
+      }
+
       function finishMtlHoldersTable() {
+        // sort by .mtl_balance descending
+        mtl_holders.sort((a, b) => b.mtl_balance - a.mtl_balance);
+        mtl_holders.forEach(appendMtlHoldersTableRow);
       }
 
       server
         .accounts()
         .forAsset(MTL)
         .call()
-        .then(collectPages(appendMtlHoldersTable, finishMtlHoldersTable));
+        .then(collectPages(appendMtlHolders, finishMtlHoldersTable));
     </script>
 
   </body>
