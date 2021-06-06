@@ -6,15 +6,17 @@ const MTL_TREASURY = 'GDX23CPGMQ4LN55VGEDVFZPAJMAUEHSHAMJ2GMCU2ZSHN5QF4TMZYPIS';
 const MTLCITY_CODE = 'MTLCITY';
 const MTLCITY_ISSUER =
   'GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3';
+const MTLCITY_TREASURY = null;
 
 const MTL     = new StellarSdk.Asset(MTL_CODE,     MTL_ISSUER);
 const MTLCITY = new StellarSdk.Asset(MTLCITY_CODE, MTLCITY_ISSUER);
 
 const server = new StellarSdk.Server('https://horizon.stellar.org');
 
-function collectPages(asset, onPage, atEnd) {
+function collectPages(asset, treasury, onPage, atEnd) {
   let collector = {
     asset: asset,
+    treasury: treasury,
     holders: [],
     supply: 0,
     distributed: 0,
@@ -49,7 +51,7 @@ function appendHolders(supply_text, distributed_text) {
       collector.supply += balance;
       supply_text.innerText = collector.supply;
 
-      if (accountRecord.account_id != MTL_TREASURY)
+      if (accountRecord.account_id != collector.treasury)
         collector.distributed += balance;
       distributed_text.innerText = collector.distributed;
     }
@@ -62,10 +64,7 @@ function appendHoldersTableRow(collector, table, accountRecord) {
     ? 'MTL Treasury'
     : '…' + accountRecord.account_id.substring(52);
 
-  const share =
-    accountRecord.account_id == MTL_TREASURY
-    ? 0
-    : accountRecord.balance / collector.distributed;
+  const share = accountRecord.balance / collector.distributed;
 
   const power = share;
 
@@ -89,7 +88,7 @@ function finishHoldersTable(table) {
     // sort by .balance descending
     collector.holders.sort((a, b) => b.balance - a.balance);
     for (const accountRecord of collector.holders) {
-      if (accountRecord.account_id != MTL_TREASURY)
+      if (accountRecord.account_id != collector.treasury)
         appendHoldersTableRow(collector, table, accountRecord);
     }
   };
