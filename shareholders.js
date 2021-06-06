@@ -121,16 +121,18 @@ function makeHoldersTable(table, parent_collector) {
     }
 
     // append parent holders
-    for (const accountRecord of parent_collector.holders) {
-      if (!(accountRecord.account_id in holders)) {
-        accountRecord.balance = 0;
-        accountRecord.share = 0;
-        accountRecord.parent_share = parent_shares[accountRecord.account_id];
-        accountRecord.power =
-          accountRecord.parent_share
-            * collector.mtl_treasury_balance
-            / collector.distributed;
-        holders[accountRecord.account_id] = accountRecord;
+    if (parent_collector) {
+      for (const accountRecord of parent_collector.holders) {
+        if (!(accountRecord.account_id in holders)) {
+          accountRecord.balance = 0;
+          accountRecord.share = 0;
+          accountRecord.parent_share = parent_shares[accountRecord.account_id];
+          accountRecord.power =
+            accountRecord.parent_share
+              * collector.mtl_treasury_balance
+              / collector.distributed;
+          holders[accountRecord.account_id] = accountRecord;
+        }
       }
     }
 
