@@ -51,20 +51,25 @@
                 asset_code == MTL_CODE && asset_issuer == MTL_ISSUER
             )
             .map(({balance}) => +balance);
-          mtl_supply += balance;
+
+            mtl_supply += balance;
           mtl_supply_text.innerText = mtl_supply;
+
           if (accountRecord.account_id != MTL_TREASURY)
             mtl_distributed += balance;
           mtl_distributed_text.innerText = mtl_distributed;
 
+          const name =
+            accountRecord.account_id == MTL_TREASURY
+            ? 'MTL Treasury'
+            : '…' + accountRecord.account_id.substring(52);
+
           const tr =
             mtl_holders_table.appendChild(document.createElement('tr'));
-
           tr.appendChild(document.createElement('td'))
             .appendChild(document.createTextNode(balance));
-
           tr.appendChild(document.createElement('td'))
-            .appendChild(document.createTextNode(accountRecord.account_id));
+            .appendChild(document.createTextNode(name));
         }
       }
 
