@@ -1,0 +1,24 @@
+{
+  "name": "stellar-sdk",
+  "homepage": "https://github.com/stellar/bower-js-stellar-sdk",
+  "authors": [
+    "Stellar Development Foundation"
+  ],
+  "description": "Main Stellar client library for the Javascript language",
+  "main": "./stellar-sdk.min.js",
+  "keywords": [
+    "stellar"
+  ],
+  "license": "Apache 2.0",
+  "version": "8.2.2",
+  "_release": "8.2.2",
+  "_resolution": {
+    "type": "version",
+    "tag": "v8.2.2",
+    "commit": "92f47c280dfe0b97c71ae58c67c1847c0d06667a"
+  },
+  "_source": "https://github.com/stellar/bower-js-stellar-sdk.git",
+  "_target": "^8.2.2",
+  "_originalSource": "stellar-sdk",
+  "_direct": true
+}

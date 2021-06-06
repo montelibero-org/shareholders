@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shareholders of MTL and affiliates</title>
+    <script src="./bower_components/stellar-sdk/stellar-sdk.js"></script>
+    <script>
+      const MTL_CODE = 'MTL';
+      const MTL_ISSUER =
+        'GACKTN5DAZGWXRWB2WLM6OPBDHAMT6SJNGLJZPQMEZBUR4JUGBX2UK7V';
+      const MTL =
+        new StellarSdk.Asset(MTL_CODE, MTL_ISSUER);
+      const server = new StellarSdk.Server('https://horizon.stellar.org');
+    </script>
+  </head>
+  <body>
+    <h2>MTL Shareholders</h2>
+    <table id="mtl_holders_table"><th>Tokens</th><th>Account</th></table>
+
+    <script>
+      function collectPages(onPage, atEnd) {
+        function recur(collectionPage) {
+          if (collectionPage.records.length) {
+            onPage(collectionPage);
+            collectionPage.next().then(recur);
+          } else {
+            // end of collection
+            atEnd();
+          }
+        };
+        return recur;
+      }
+
+      let mtl_holders = [];
+      function appendMtlHoldersTable(collectionPage) {
+        mtl_holders = mtl_holders.concat(collectionPage.records);
+        for (const accountRecord of collectionPage.records) {
+          const tr =
+            mtl_holders_table.appendChild(document.createElement('tr'));
+
+          const balance =
+            accountRecord
+            .balances
+            .filter(
+              ({asset_code, asset_issuer}) =>
+                asset_code == MTL_CODE && asset_issuer == MTL_ISSUER
+            )
+            .map(({balance, asset_code}) => balance + asset_code);
+          tr.appendChild(document.createElement('td'))
+            .appendChild(document.createTextNode(balance));
+
+          tr.appendChild(document.createElement('td'))
+            .appendChild(document.createTextNode(accountRecord.account_id));
+        }
+      }
+
+      function finishMtlHoldersTable() {
+      }
+
+      server
+        .accounts()
+        .forAsset(MTL)
+        .call()
+        .then(collectPages(appendMtlHoldersTable, finishMtlHoldersTable));
+    </script>
+
+  </body>
+</html>
