@@ -95,14 +95,16 @@ function appendHoldersTableRow(collector, table, accountRecord) {
 }
 
 function makeHoldersTable(table, parent_collector) {
-  return collector => {
-    let parent_shares = {};
-    if (parent_collector) {
-      for (const accountRecord of parent_collector.holders) {
-        parent_shares[accountRecord.account_id] =
-          accountRecord.balance / parent_collector.distributed;
-      }
+  let parent_shares = {};
+  if (parent_collector) {
+    for (const accountRecord of parent_collector.holders) {
+      parent_shares[accountRecord.account_id] =
+        accountRecord.balance / parent_collector.distributed;
     }
+  }
+
+  return collector => {
+    let holders = {};
 
     for (const accountRecord of collector.holders) {
       accountRecord.share = accountRecord.balance / collector.distributed;
@@ -115,12 +117,29 @@ function makeHoldersTable(table, parent_collector) {
         + accountRecord.parent_share
           * collector.mtl_treasury_balance
           / collector.distributed;
+      holders[accountRecord.account_id] = accountRecord;
     }
 
-    // sort by .power descending
-    collector.holders.sort((a, b) => b.power - a.power);
+    // append parent holders
+    for (const accountRecord of parent_collector.holders) {
+      if (!(accountRecord.account_id in holders)) {
+        accountRecord.balance = 0;
+        accountRecord.share = 0;
+        accountRecord.parent_share = parent_shares[accountRecord.account_id];
+        accountRecord.power =
+          accountRecord.parent_share
+            * collector.mtl_treasury_balance
+            / collector.distributed;
+        holders[accountRecord.account_id] = accountRecord;
+      }
+    }
 
-    for (const accountRecord of collector.holders) {
+    holders = Object.values(holders);
+
+    // sort by .power descending
+    holders.sort((a, b) => b.power - a.power);
+
+    for (const accountRecord of holders) {
       if (accountRecord.account_id != MTL_TREASURY)
         appendHoldersTableRow(collector, table, accountRecord);
     }
