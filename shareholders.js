@@ -21,7 +21,8 @@ function collectPages(asset, onPage, atEnd) {
   };
   function recur(collectionPage) {
     if (collectionPage.records.length) {
-      onPage(collector, collectionPage);
+      collectHolders(collector, collectionPage.records);
+      onPage(collector, collectionPage.records);
       collectionPage.next().then(recur);
     } else {
       // end of collection
@@ -31,29 +32,33 @@ function collectPages(asset, onPage, atEnd) {
   return recur;
 }
 
+function collectHolders(collector, records) {
+  collector.holders = collector.holders.concat(records);
+  for (const accountRecord of records) {
+    const [balance] =
+      accountRecord
+      .balances
+      .filter(
+        ({asset_code, asset_issuer}) =>
+          asset_code   == collector.asset.getCode() &&
+          asset_issuer == collector.asset.getIssuer()
+      )
+      .map(({balance}) => +balance);
+    accountRecord.balance = balance;
+
+    collector.supply += balance;
+
+    if (accountRecord.account_id != MTL_TREASURY || collector.asset != MTL)
+      collector.distributed += balance;
+    if (accountRecord.account_id == MTL_TREASURY)
+      collector.mtl_treasury_balance = balance;
+  }
+}
+
 function appendHolders(supply_text, distributed_text) {
-  return (collector, collectionPage) => {
-    collector.holders = collector.holders.concat(collectionPage.records);
-    for (const accountRecord of collectionPage.records) {
-      const [balance] =
-        accountRecord
-        .balances
-        .filter(
-          ({asset_code, asset_issuer}) =>
-            asset_code   == collector.asset.getCode() &&
-            asset_issuer == collector.asset.getIssuer()
-        )
-        .map(({balance}) => +balance);
-      accountRecord.balance = balance;
-
-      collector.supply += balance;
+  return (collector, records) => {
+    for (const accountRecord of records) {
       supply_text.innerText = collector.supply;
-
-      if (accountRecord.account_id != MTL_TREASURY || collector.asset != MTL)
-        collector.distributed += balance;
-      if (accountRecord.account_id == MTL_TREASURY)
-        collector.mtl_treasury_balance = balance;
-
       if (distributed_text)
         distributed_text.innerText = collector.distributed;
     }
