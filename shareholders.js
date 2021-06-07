@@ -13,12 +13,17 @@ MTL.fetch_limit = 100;
 const MTLCITY = new StellarSdk.Asset(MTLCITY_CODE, MTLCITY_ISSUER);
 MTLCITY.fetch_limit = 100;
 
-const server = new StellarSdk.Server('https://horizon.stellar.org');
+const Server = new StellarSdk.Server('https://horizon.stellar.org');
+
+const StellarExpert = {
+  txLink:
+    tx => `https://stellar.expert/explorer/public/tx/${tx.tx_id}#${tx.id}`,
+}
 
 async function getFundInfo(asset) {
   const holders =
     await
-      server
+      Server
       .accounts()
       .forAsset(asset)
       .limit(asset.fetch_limit)
@@ -54,7 +59,14 @@ async function getFundInfo(asset) {
   for (const accountRecord of holders) {
     accountRecord.balanceEffective = accountRecord.balance;
     if (delegation.sources[accountRecord.account_id]) {
+      const tx = delegation.sources[accountRecord.account_id];
       accountRecord.balanceEffective = 0;
+      accountRecord
+        .explanation
+        .push(
+          `delegated net share
+          <a href="${StellarExpert.txLink(tx)}">to …${tx.to.substring(52)}</a>`
+        );
     }
     if (delegation.targets[accountRecord.account_id]) {
       accountRecord.balanceEffective +=
@@ -62,6 +74,20 @@ async function getFundInfo(asset) {
         .keys(delegation.targets[accountRecord.account_id])
         .map(account => holderDict[account].balance)
         .reduce((a, b) => a + b, 0);
+      accountRecord.explanation =
+        accountRecord
+        .explanation
+        .concat(
+          Object
+          .entries(delegation.targets[accountRecord.account_id])
+          .map(
+            ([account, tx]) =>
+              `delegated ${holderDict[account].balance}
+              <a href="${StellarExpert.txLink(tx)}">
+                from …${account.substring(52)}
+              </a>`
+          )
+        );
     }
     if (accountRecord.balanceEffective != accountRecord.balance)
       accountRecord
