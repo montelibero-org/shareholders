@@ -135,20 +135,14 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
 
   const tr = table.appendChild(document.createElement('tr'));
   // TODO calculate Rank for accounts, starts from 1
-  tr.appendChild(document.createElement('td'))
-    .appendChild(document.createTextNode('0'));
+  tr.appendChild(document.createElement('td')).innerText = '0';
   // TODO show it only to signers of issuer
-  tr.appendChild(document.createElement('td'))
-    .appendChild(document.createTextNode(power));
-  tr.appendChild(document.createElement('td'))
-    .appendChild(document.createTextNode('S'));
-
+  tr.appendChild(document.createElement('td')).innerText = power;
+  tr.appendChild(document.createElement('td')).innerText = 'S';
   tr.appendChild(document.createElement('td')).innerHTML = name_html;
-
-  tr.appendChild(document.createElement('td'))
-    .appendChild(document.createTextNode(accountRecord.balance));
-  tr.appendChild(document.createElement('td'))
-    .appendChild(document.createTextNode(explanation));
+  tr.appendChild(document.createElement('td')).innerText =
+    accountRecord.balance;
+  tr.appendChild(document.createElement('td')).innerHTML = explanation;
 }
 
 function makeHoldersTable(fundInfo, table) {
