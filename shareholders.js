@@ -20,6 +20,32 @@ const StellarExpert = {
     tx => `https://stellar.expert/explorer/public/tx/${tx.tx_id}#${tx.id}`,
 }
 
+function share(accountRecord) {
+  return accountRecord.balance / accountRecord.fundInfo.distributed;
+}
+
+function shareEffective(accountRecord) {
+  return accountRecord.balanceEffective / accountRecord.fundInfo.distributed;
+}
+
+function power(accountRecord) {
+  return share(accountRecord) + (accountRecord.shareViaParent || 0);
+}
+
+function powerEffective(accountRecord) {
+  const p =
+    shareEffective(accountRecord) + (accountRecord.shareViaParentEffective || 0);
+  if (isNaN(p))
+    console.log('powerEffective', p, accountRecord);
+  return p;
+}
+
+function mtlTreasuryShareEffective(fundInfo) {
+  return (
+    fundInfo.holderDict[MTL_TREASURY].balanceEffective / fundInfo.distributed
+  );
+}
+
 async function getFundInfo(asset) {
   const holders =
     await
@@ -30,7 +56,7 @@ async function getFundInfo(asset) {
       .call()
       .then(({records}) => records);
 
-  const delegation = await getDelegations(asset);
+  const delegations = await getDelegations(asset);
 
   let supply = 0;
   let distributed = 0;
@@ -44,8 +70,8 @@ async function getFundInfo(asset) {
       .balances
       .filter(
         ({asset_code, asset_issuer}) =>
-          asset_code   == asset.getCode() &&
-          asset_issuer == asset.getIssuer()
+          asset_code   == asset.code &&
+          asset_issuer == asset.issuer
       )
       .map(({balance}) => +balance);
     accountRecord.balance = balance;
@@ -56,10 +82,19 @@ async function getFundInfo(asset) {
       distributed += balance;
   }
 
+  const fundInfo = {
+    asset: asset,
+    delegations: delegations,
+    distributed: distributed,
+    holderDict: holderDict,
+    supply: supply,
+  };
+
   for (const accountRecord of holders) {
+    accountRecord.fundInfo = fundInfo;
     accountRecord.balanceEffective = accountRecord.balance;
-    if (delegation.sources[accountRecord.account_id]) {
-      const tx = delegation.sources[accountRecord.account_id];
+    if (delegations.sources[accountRecord.account_id]) {
+      const tx = delegations.sources[accountRecord.account_id];
       accountRecord.balanceEffective = 0;
       accountRecord
         .explanation
@@ -68,10 +103,10 @@ async function getFundInfo(asset) {
           <a href="${StellarExpert.txLink(tx)}">to …${tx.to.substring(52)}</a>`
         );
     }
-    if (delegation.targets[accountRecord.account_id]) {
+    if (delegations.targets[accountRecord.account_id]) {
       accountRecord.balanceEffective +=
         Object
-        .keys(delegation.targets[accountRecord.account_id])
+        .keys(delegations.targets[accountRecord.account_id])
         .map(account => holderDict[account].balance)
         .reduce((a, b) => a + b, 0);
       accountRecord.explanation =
@@ -79,39 +114,36 @@ async function getFundInfo(asset) {
         .explanation
         .concat(
           Object
-          .entries(delegation.targets[accountRecord.account_id])
+          .entries(delegations.targets[accountRecord.account_id])
           .map(
             ([account, tx]) =>
-              `delegated ${holderDict[account].share * 100}%
+              `delegated net share
+              ${holderDict[account].balance / distributed * 100}%
               <a href="${StellarExpert.txLink(tx)}">
                 from …${account.substring(52)}
               </a>`
           )
         );
     }
-    if (accountRecord.balanceEffective != accountRecord.balance)
+
+    accountRecord
+      .explanation
+      .push(
+        `net share = ${share(accountRecord) * 100}%`
+      );
+
+    if (accountRecord.balanceEffective != accountRecord.balance) {
       accountRecord
         .explanation
-        .push(`balance with delegation = ${accountRecord.balanceEffective}`);
-
-    accountRecord.share = accountRecord.balance / distributed;
-    accountRecord.explanation.push(`net share = ${accountRecord.share * 100}%`);
-
-    accountRecord.shareEffective = accountRecord.balanceEffective / distributed;
-    if (accountRecord.shareEffective != accountRecord.share)
-      accountRecord
-        .explanation
-        .push(`share with delegation = ${accountRecord.shareEffective}`);
-
-    accountRecord.power = accountRecord.shareEffective;
+        .push(
+          `balance with delegation = ${accountRecord.balanceEffective}`,
+          `share with delegation =
+            ${shareEffective(accountRecord)}`
+        );
+    }
   }
 
-  return {
-    asset: asset,
-    distributed: distributed,
-    holderDict: holderDict,
-    supply: supply,
-  };
+  return fundInfo;
 }
 
 function setHoldersStats(fundInfo, supply_text, distributed_text) {
@@ -121,24 +153,23 @@ function setHoldersStats(fundInfo, supply_text, distributed_text) {
 }
 
 function mergeMtlHolders(fundInfo, parentFundInfo) {
-  let parentShares = {};
+  let sharesInParent = {};
   for (const accountRecord of Object.values(parentFundInfo.holderDict)) {
-    parentShares[accountRecord.account_id] =
-      accountRecord.balance / parentFundInfo.distributed;
+    sharesInParent[accountRecord.account_id] =
+      share(accountRecord, parentFundInfo.distributed);
   }
 
   for (const accountRecord of Object.values(fundInfo.holderDict)) {
-    if (accountRecord.account_id in parentShares) {
-      accountRecord.parentShare = parentShares[accountRecord.account_id];
-      const powerup =
-        accountRecord.parentShare
-        * fundInfo.holderDict[MTL_TREASURY].shareEffective;
-      accountRecord.power += powerup;
+    accountRecord.shareViaParent = 0;
+    if (accountRecord.account_id in sharesInParent) {
+      const shareInParent = sharesInParent[accountRecord.account_id];
+      accountRecord.shareViaParent =
+        shareInParent * mtlTreasuryShareEffective(fundInfo);
       accountRecord
         .explanation
         .push(
-          `share in MTL = ${accountRecord.parentShare * 100}%`,
-          `powerup from MTL = ${powerup * 100}%`
+          `share in MTL = ${shareInParent * 100}%`,
+          `share via MTL = ${accountRecord.shareViaParent * 100}%`
         );
     }
   }
@@ -147,20 +178,53 @@ function mergeMtlHolders(fundInfo, parentFundInfo) {
   for (const accountRecord of Object.values(parentFundInfo.holderDict)) {
     if (!(accountRecord.account_id in fundInfo.holderDict)) {
       accountRecord.balance = 0;
-      accountRecord.share = 0;
-      accountRecord.parentShare = parentShares[accountRecord.account_id];
-      const powerup =
-        accountRecord.parentShare
-        * fundInfo.holderDict[MTL_TREASURY].shareEffective;
-      accountRecord.power = powerup;
+      accountRecord.balanceEffective = 0;
+      const shareInParent = sharesInParent[accountRecord.account_id];
+      accountRecord.shareViaParent =
+        shareInParent * mtlTreasuryShareEffective(fundInfo);
+      accountRecord.explanation =
+        [
+          'account came from MTL',
+          `share in MTL = ${shareInParent * 100}%`,
+          `share via MTL = ${accountRecord.shareViaParent * 100}%`
+        ];
+      fundInfo.holderDict[accountRecord.account_id] = accountRecord;
+    }
+  }
+
+  for (const accountRecord of Object.values(fundInfo.holderDict)) {
+    accountRecord.shareViaParentEffective = accountRecord.shareViaParent;
+    if (fundInfo.delegations.sources[accountRecord.account_id]) {
+      const tx = fundInfo.delegations.sources[accountRecord.account_id];
+      accountRecord.shareViaParentEffective = 0;
       accountRecord
         .explanation
         .push(
-          'account came from MTL',
-          `share in MTL = ${accountRecord.parentShare * 100}%`,
-          `powerup from MTL = ${powerup * 100}%`
+          `delegated MTL share
+          <a href="${StellarExpert.txLink(tx)}">to …${tx.to.substring(52)}</a>`
         );
-      fundInfo.holderDict[accountRecord.account_id] = accountRecord;
+    }
+    if (fundInfo.delegations.targets[accountRecord.account_id]) {
+      accountRecord.shareViaParentEffective +=
+        Object
+        .keys(fundInfo.delegations.targets[accountRecord.account_id])
+        .map(account => fundInfo.holderDict[account].shareViaParent)
+        .reduce((a, b) => a + b, 0);
+      accountRecord.explanation =
+        accountRecord
+        .explanation
+        .concat(
+          Object
+          .entries(fundInfo.delegations.targets[accountRecord.account_id])
+          .map(
+            ([account, tx]) =>
+              `delegated MTL share
+              ${fundInfo.holderDict[account].shareViaParent * 100}%
+              <a href="${StellarExpert.txLink(tx)}">
+                from …${account.substring(52)}
+              </a>`
+          )
+        );
     }
   }
 }
@@ -182,7 +246,7 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
   // TODO show the final power of the vote given the participation in the MTL and the delegation transactions
   // TODO if vote power is less than 0.01 then show "<0.01%"
   // TODO don't show accounts with 0 vote power
-  const power = (accountRecord.power * 100).toFixed(2) + '%';
+  const power = (powerEffective(accountRecord) * 100).toFixed(2) + '%';
 
   const tr = table.appendChild(document.createElement('tr'));
   // TODO calculate Rank for accounts, starts from 1
@@ -203,9 +267,11 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
 }
 
 function makeHoldersTable(fundInfo, table) {
-  // sort by .power descending
+  // sort by powerEffective descending
   const holders =
-    Object.values(fundInfo.holderDict).sort((a, b) => b.power - a.power);
+    Object
+    .values(fundInfo.holderDict)
+    .sort((a, b) => powerEffective(b) - powerEffective(a));
 
   for (const accountRecord of holders) {
     if (accountRecord.account_id != MTL_TREASURY)
@@ -218,7 +284,7 @@ async function getDelegations(asset) {
     await
       fetch(
         'https://api.stellar.expert/explorer/public/payments?' +
-        `asset=${asset.getCode()}-${asset.getIssuer()}&limit=200&order=desc`
+        `asset=${asset.code}-${asset.issuer}&limit=200&order=desc`
       );
   const responseJson = await response.json();
   const payments = responseJson._embedded.records;
@@ -236,7 +302,7 @@ async function getDelegations(asset) {
         targets[payment.to][payment.from] = payment;
         break;
       case 'undelegate':
-        sources[payment.from] = 'undelegate';
+        sources[payment.from] = false;
         break;
     }
   }
