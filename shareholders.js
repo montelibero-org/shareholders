@@ -246,7 +246,10 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
   // TODO show the final power of the vote given the participation in the MTL and the delegation transactions
   // TODO if vote power is less than 0.01 then show "<0.01%"
   // TODO don't show accounts with 0 vote power
-  const power = (powerEffective(accountRecord) * 100).toFixed(2) + '%';
+  const power_html =
+    (power(accountRecord) != 0 && powerEffective(accountRecord) == 0)
+    ? `<s>${(power(accountRecord) * 100).toFixed(2)}%</s>`
+    : `${(powerEffective(accountRecord) * 100).toFixed(2)}%`;
 
   const tr = table.appendChild(document.createElement('tr'));
   // TODO calculate Rank for accounts, starts from 1
@@ -255,7 +258,7 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
   // TODO show it only to signers of issuer
   const power_td = tr.appendChild(document.createElement('td'));
   power_td.classList.add('power');
-  power_td.innerText = power;
+  power_td.innerHTML = power_html;
 
   tr.appendChild(document.createElement('td')).innerText = 'S';
   tr.appendChild(document.createElement('td')).innerHTML = name_html;
