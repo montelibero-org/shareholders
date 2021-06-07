@@ -69,7 +69,7 @@ async function getFundInfo(asset) {
         .push(`balance with delegation = ${accountRecord.balanceEffective}`);
 
     accountRecord.share = accountRecord.balance / distributed;
-    accountRecord.explanation.push(`net share = ${accountRecord.share}`);
+    accountRecord.explanation.push(`net share = ${accountRecord.share * 100}%`);
 
     accountRecord.shareEffective = accountRecord.balanceEffective / distributed;
     if (accountRecord.shareEffective != accountRecord.share)
@@ -148,7 +148,9 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
           "https://stellar.expert/explorer/public/account/${accountRecord.account_id}"
         rel="nofollow noreferrer noopener"
         target="_blank">
-        …${accountRecord.account_id.substring(52)}
+        <nobr>
+          …${accountRecord.account_id.substring(52)}
+        </nobr>
       </a>`;
 
   // TODO show the final power of the vote given the participation in the MTL and the delegation transactions
@@ -174,8 +176,12 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
   const tr = table.appendChild(document.createElement('tr'));
   // TODO calculate Rank for accounts, starts from 1
   tr.appendChild(document.createElement('td')).innerText = '0';
+
   // TODO show it only to signers of issuer
-  tr.appendChild(document.createElement('td')).innerText = power;
+  const power_td = tr.appendChild(document.createElement('td'));
+  power_td.classList.add('power');
+  power_td.innerText = power;
+
   tr.appendChild(document.createElement('td')).innerText = 'S';
   tr.appendChild(document.createElement('td')).innerHTML = name_html;
   tr.appendChild(document.createElement('td')).innerText =
