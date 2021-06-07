@@ -118,8 +118,7 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
   let explanation = '';
   if (accountRecord.account_id != MTL_TREASURY)
     explanation +=
-      `balance = ${accountRecord.balance} ${fundInfo.asset.getCode()},
-      share in ${fundInfo.asset.getCode()} = ${accountRecord.share * 100}%`;
+      `share in ${fundInfo.asset.getCode()} = ${accountRecord.share * 100}%`;
   if (accountRecord.parentShare)
     explanation +=
       `, share in MTL = ${accountRecord.parentShare * 100}%,
