@@ -104,10 +104,10 @@ function mergeMtlHolders(fundInfo, parentFundInfo) {
 }
 
 function appendHoldersTableRow(fundInfo, table, accountRecord) {
-  const name =
+  const name_html =
     accountRecord.account_id == MTL_TREASURY
     ? 'MTL Treasury'
-    : '<a href="https://stellar.expert/explorer/public/account/' + accountRecord.account_id + '" rel="nofollow noreferrer noopener" target="_blank">' + accountRecord.account_id + '</a>';
+    : `<a href="https://stellar.expert/explorer/public/account/${accountRecord.account_id}" rel="nofollow noreferrer noopener" target="_blank">…${accountRecord.account_id.substring(52)}</a>`;
 
   // TODO show the final power of the vote given the participation in the MTL and the delegation transactions
   // TODO if vote power is less than 0.01 then show "<0.01%"
@@ -142,9 +142,9 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
     .appendChild(document.createTextNode(power));
   tr.appendChild(document.createElement('td'))
     .appendChild(document.createTextNode('S'));
-  // TODO output HTML code correctly for a links
-  tr.appendChild(document.createElement('td'))
-    .appendChild(document.createTextNode(name));
+
+  tr.appendChild(document.createElement('td')).innerHTML = name_html;
+
   tr.appendChild(document.createElement('td'))
     .appendChild(document.createTextNode(accountRecord.balance));
   tr.appendChild(document.createElement('td'))
