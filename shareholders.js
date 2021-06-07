@@ -82,7 +82,7 @@ async function getFundInfo(asset) {
           .entries(delegation.targets[accountRecord.account_id])
           .map(
             ([account, tx]) =>
-              `delegated ${holderDict[account].balance}
+              `delegated ${holderDict[account].share * 100}%
               <a href="${StellarExpert.txLink(tx)}">
                 from …${account.substring(52)}
               </a>`
