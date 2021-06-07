@@ -158,21 +158,6 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
   // TODO don't show accounts with 0 vote power
   const power = (accountRecord.power * 100).toFixed(2) + '%';
 
-  // if (accountRecord.account_id != MTL_TREASURY)
-  //   explanation +=
-  //     `share in ${fundInfo.asset.getCode()} = ${accountRecord.share * 100}%`;
-  // if (accountRecord.parentShare)
-  //   explanation +=
-  //     `, share in MTL = ${accountRecord.parentShare * 100}%,
-  //     MTL balance in ${fundInfo.asset.getCode()} =
-  //       ${fundInfo.holderDict[MTL_TREASURY].balance},
-  //     MTL share in ${fundInfo.asset.getCode()} =
-  //       ${fundInfo.holderDict[MTL_TREASURY].share * 100}%,
-  //     share via MTL =
-  //       ${accountRecord.parentShare
-  //         * fundInfo.holderDict[MTL_TREASURY].shareEffective
-  //         * 100}%`;
-
   const tr = table.appendChild(document.createElement('tr'));
   // TODO calculate Rank for accounts, starts from 1
   tr.appendChild(document.createElement('td')).innerText = '0';
