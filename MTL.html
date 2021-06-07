@@ -22,17 +22,11 @@
       <th>Explanation</th>
     </table>
     <script>
-      server
-        .accounts()
-        .forAsset(MTL)
-        .call()
-        .then(
-          collectPages(
-            MTL,
-            appendHolders(supply_text, distributed_text),
-            makeHoldersTable(holders_table)
-          )
-        );
+      (async () => {
+        const mtlFundInfo = await getFundInfo(MTL);
+        setHoldersStats(mtlFundInfo, supply_text, distributed_text);
+        makeHoldersTable(mtlFundInfo, holders_table);
+      })();
     </script>
   </body>
 </html>

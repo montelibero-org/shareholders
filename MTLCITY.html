@@ -24,35 +24,14 @@
       <th>Explanation</th>
     </table>
     <script>
-      function collect_mtl() {
-        server
-          .accounts()
-          .forAsset(MTL)
-          .call()
-          .then(
-            collectPages(
-              MTL,
-              appendHolders(mtl_supply_text, mtl_distributed_text),
-              collect_mtlcity
-            )
-          );
-      }
-
-      function collect_mtlcity(mtl_collector) {
-        server
-          .accounts()
-          .forAsset(MTLCITY)
-          .call()
-          .then(
-            collectPages(
-              MTLCITY,
-              appendHolders(mtlcity_supply_text),
-              makeHoldersTable(holders_table, mtl_collector)
-            )
-          );
-      }
-
-      collect_mtl();
+      (async () => {
+        const mtlFundInfo = await getFundInfo(MTL);
+        setHoldersStats(mtlFundInfo, mtl_supply_text, mtl_distributed_text);
+        const mtlcityFundInfo = await getFundInfo(MTLCITY);
+        setHoldersStats(mtlcityFundInfo, mtlcity_supply_text);
+        mergeMtlHolders(mtlcityFundInfo, mtlFundInfo);
+        makeHoldersTable(mtlcityFundInfo, holders_table);
+      })();
     </script>
   </body>
 </html>
