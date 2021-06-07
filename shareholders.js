@@ -4,8 +4,7 @@ const MTL_CODE = 'MTL';
 const MTL_ISSUER = 'GACKTN5DAZGWXRWB2WLM6OPBDHAMT6SJNGLJZPQMEZBUR4JUGBX2UK7V';
 const MTL_TREASURY = 'GDX23CPGMQ4LN55VGEDVFZPAJMAUEHSHAMJ2GMCU2ZSHN5QF4TMZYPIS';
 const MTLCITY_CODE = 'MTLCITY';
-const MTLCITY_ISSUER =
-  'GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3';
+const MTLCITY_ISSUER = 'GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3';
 
 const MTL     = new StellarSdk.Asset(MTL_CODE,     MTL_ISSUER);
 const MTLCITY = new StellarSdk.Asset(MTLCITY_CODE, MTLCITY_ISSUER);
@@ -69,13 +68,22 @@ function appendHoldersTableRow(collector, table, accountRecord) {
   const name =
     accountRecord.account_id == MTL_TREASURY
     ? 'MTL Treasury'
-    : '…' + accountRecord.account_id.substring(52);
+    : '<a href="https://stellar.expert/explorer/public/account/' + accountRecord.account_id + '" rel="nofollow noreferrer noopener" target="_blank">' + accountRecord.account_id + '</a>';
 
+  const balance =
+    accountRecord.account_id == MTL_TREASURY
+    ? ''
+    : accountRecord.balance;
+
+  // TODO show the final power of the vote given the participation in the MTL and the delegation transactions
+  // TODO if vote power is less than 0.01 then show ">0.01%"
+  // TODO dont show accounts with 0% vote powers
+  const vote_power = (accountRecord.power * 100).toFixed(2) + '%';
+  // TODO remove this column later
   const explanation =
     accountRecord.account_id == MTL_TREASURY
     ? ''
-    : `balance = ${accountRecord.balance} ${collector.asset.getCode()},
-      share in ${collector.asset.getCode()} =
+    : `share in ${collector.asset.getCode()} =
         ${accountRecord.share * 100}%` +
     (accountRecord.parent_share
       ? `, share in MTL = ${accountRecord.parent_share * 100}%,
@@ -91,10 +99,19 @@ function appendHoldersTableRow(collector, table, accountRecord) {
       : '');
 
   const tr = table.appendChild(document.createElement('tr'));
+  // TODO calculate Rank for accounts, starts from 1
   tr.appendChild(document.createElement('td'))
-    .appendChild(document.createTextNode(`${accountRecord.power * 100}%`));
+    .appendChild(document.createTextNode('0'));
+  // TODO show it only to signers of issuer
+  tr.appendChild(document.createElement('td'))
+    .appendChild(document.createTextNode(vote_power));
+  tr.appendChild(document.createElement('td'))
+    .appendChild(document.createTextNode('S'));
+  // TODO output HTML code correctly for a links
   tr.appendChild(document.createElement('td'))
     .appendChild(document.createTextNode(name));
+  tr.appendChild(document.createElement('td'))
+    .appendChild(document.createTextNode(balance));
   tr.appendChild(document.createElement('td'))
     .appendChild(document.createTextNode(explanation));
 }
