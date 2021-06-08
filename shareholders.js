@@ -248,7 +248,7 @@ function appendHoldersTableRow(fundInfo, table, accountRecord) {
   // TODO don't show accounts with 0 vote power
   const power_html =
     (power(accountRecord) != 0 && powerEffective(accountRecord) == 0)
-    ? `<s>${(power(accountRecord) * 100).toFixed(2)}%</s>`
+    ? `<s title="Delegated">${(power(accountRecord) * 100).toFixed(2)}%</s>`
     : `${(powerEffective(accountRecord) * 100).toFixed(2)}%`;
 
   const tr = table.appendChild(document.createElement('tr'));
