@@ -1,16 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <link rel="stylesheet" href="./shareholders.css">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./bower_components/stellar-sdk/stellar-sdk.js"></script>
+    <script src="./shareholders.js"></script>
     <title>Shareholders of MTL and affiliates</title>
   </head>
   <body>
     <h1>Shareholders of MTL and affiliates</h1>
     <ul>
-      <li><a href="MTL.html">MTL</a></li>
-      <li><a href="MTLCITY.html">MTLCITY</a></li>
+      <li><a href="#MTL">MTL</a></li>
+      <li><a href="#MTLCITY">MTLCITY</a></li>
     </ul>
+
+    <a name="MTL"><h2>MTL Shareholders</h2></a>
+    <p>
+      <a
+        href=
+          "https://stellar.expert/explorer/public/asset/MTL-GACKTN5DAZGWXRWB2WLM6OPBDHAMT6SJNGLJZPQMEZBUR4JUGBX2UK7V"
+        rel="nofollow noreferrer noopener"
+        target="_blank"
+        >
+        View on Network Explorer
+      </a>
+    </p>
+    <p>Supply: <span id="mtl_supply_text">0</span></p>
+    <p>Distributed: <span id="mtl_distributed_text">0</span></p>
+    <table id="mtl_holders_table">
+      <th title="Rank">#</th>
+      <th>Vote Power</th>
+      <th title="Signer">S</th>
+      <th>Account</th>
+      <th>MTL</th>
+      <th>Explanation</th>
+    </table>
+
+    <a name="MTLCITY"><h2>MTLCITY Shareholders</h2></a>
+    <p>
+      <a
+        href=
+          "https://stellar.expert/explorer/public/asset/MTLCITY-GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3"
+        rel="nofollow noreferrer noopener"
+        target="_blank"
+        >
+        View on Network Explorer
+      </a>
+    </p>
+    <p>Supply: <span id="mtlcity_supply_text">0</span></p>
+    <table id="mtlcity_holders_table">
+      <th title="Rank">#</th>
+      <th>Vote Power</th>
+      <th title="Signer">S</th>
+      <th>Account</th>
+      <th>MTLCITY</th>
+      <th>Explanation</th>
+    </table>
+
+    <script>
+      (async () => {
+        const mtlFundInfo = await getFundInfo(MTL);
+        setHoldersStats(mtlFundInfo, mtl_supply_text, mtl_distributed_text);
+        makeHoldersTable(mtlFundInfo, mtl_holders_table);
+        const mtlcityFundInfo = await getFundInfo(MTLCITY);
+        setHoldersStats(mtlcityFundInfo, mtlcity_supply_text);
+        mergeMtlHolders(mtlcityFundInfo, mtlFundInfo);
+        makeHoldersTable(mtlcityFundInfo, mtlcity_holders_table);
+      })();
+    </script>
+
   </body>
 </html>
