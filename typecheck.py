@@ -2,7 +2,7 @@
 
 from os import path
 from bs4 import BeautifulSoup
-from subprocess import run
+from subprocess import check_call
 from tempfile import TemporaryDirectory
 
 html = open('index.html').read()
@@ -15,4 +15,4 @@ with TemporaryDirectory() as dir:
     with open(ts, 'w') as f:
         f.write('\n' * (script_tag.sourceline - 1))
         f.write(script)
-    run(['tsc', '--noEmit', '--strict', ts])
+    check_call(['tsc', '--noEmit', '--strict', ts])

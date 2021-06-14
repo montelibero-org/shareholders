@@ -59,18 +59,37 @@
     </table>
 
     <script id="main" type="text/typescript">
-      const MTL_CODE = 'MTL';
-      const MTL_ISSUER = 'GACKTN5DAZGWXRWB2WLM6OPBDHAMT6SJNGLJZPQMEZBUR4JUGBX2UK7V';
-      const MTL_TREASURY = 'GDX23CPGMQ4LN55VGEDVFZPAJMAUEHSHAMJ2GMCU2ZSHN5QF4TMZYPIS';
-      const MTLCITY_CODE = 'MTLCITY';
-      const MTLCITY_ISSUER =
-        'GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3';
+      // Bindings
+      declare namespace StellarSdk {
+        class Asset {
+          constructor(code: string, issuer: string)
+        }
+      }
 
-      const MTL = new StellarSdk.Asset(MTL_CODE, MTL_ISSUER);
-      MTL.fetch_limit = 100;
+      // MTL types
+      class MtlAsset extends StellarSdk.Asset {
+        fetch_limit: number;
+        constructor(code: string, issuer: string, fetch_limit: number) {
+          super(code, issuer);
+          this.fetch_limit = fetch_limit;
+        }
+      }
 
-      const MTLCITY = new StellarSdk.Asset(MTLCITY_CODE, MTLCITY_ISSUER);
-      MTLCITY.fetch_limit = 100;
+      // Constants
+      const MTL =
+        new MtlAsset(
+          'MTL',
+          'GACKTN5DAZGWXRWB2WLM6OPBDHAMT6SJNGLJZPQMEZBUR4JUGBX2UK7V',
+          100
+        );
+      const MTLCITY =
+        new MtlAsset(
+          'MTLCITY',
+          'GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3',
+          100
+        );
+      const MTL_TREASURY =
+        'GDX23CPGMQ4LN55VGEDVFZPAJMAUEHSHAMJ2GMCU2ZSHN5QF4TMZYPIS';
 
       const Server = new StellarSdk.Server('https://horizon.stellar.org');
 
