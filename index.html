@@ -69,6 +69,9 @@
         }
       }
 
+      interface AccountRecord {
+      }
+
       interface Operation {
         id: string; /// Operation identifier
         tx_id: string; /// Identifier of enclosing transaction
@@ -83,8 +86,19 @@
         }
       }
 
+      interface MtlAccountRecord extends AccountRecord {
+        balance: number;
+        balanceEffective: number;
+        fundInfo: MtlFundInfo;
+      }
+
+      interface MtlFundInfo {
+        distributed: number;
+      }
+
       const StellarExpert = {
-        opLink: op => {
+        // TODO function operationLink(op: Operation): string {
+        operationLink: (op: Operation) => {
           return (
             `https://stellar.expert/explorer/public/op/${op.tx_id}#${op.id}`
           );
@@ -109,12 +123,12 @@
 
       const Server = new StellarSdk.Server('https://horizon.stellar.org');
 
-      function share(accountRecord) {
-        return accountRecord.balance / accountRecord.fundInfo.distributed;
+      function share(a: MtlAccountRecord): number {
+        return a.balance / a.fundInfo.distributed;
       }
 
-      function shareEffective(accountRecord) {
-        return accountRecord.balanceEffective / accountRecord.fundInfo.distributed;
+      function shareEffective(a: MtlAccountRecord): number {
+        return a.balanceEffective / a.fundInfo.distributed;
       }
 
       function power(accountRecord) {
@@ -189,7 +203,7 @@
               .explanation
               .push(
                 `delegated net share
-                <a href="${StellarExpert.opLink(tx)}">to …${tx.to.substring(52)}</a>`
+                <a href="${StellarExpert.operationLink(tx)}">to …${tx.to.substring(52)}</a>`
               );
           }
           if (delegations.targets[accountRecord.account_id]) {
@@ -208,7 +222,7 @@
                   ([account, tx]) =>
                     `delegated net share
                     ${holderDict[account].balance / distributed * 100}%
-                    <a href="${StellarExpert.opLink(tx)}">
+                    <a href="${StellarExpert.operationLink(tx)}">
                       from …${account.substring(52)}
                     </a>`
                 )
@@ -290,7 +304,7 @@
               .explanation
               .push(
                 `delegated MTL share
-                <a href="${StellarExpert.opLink(tx)}">to …${tx.to.substring(52)}</a>`
+                <a href="${StellarExpert.operationLink(tx)}">to …${tx.to.substring(52)}</a>`
               );
           }
           if (fundInfo.delegations.targets[accountRecord.account_id]) {
@@ -309,7 +323,7 @@
                   ([account, tx]) =>
                     `delegated MTL share
                     ${fundInfo.holderDict[account].shareViaParent * 100}%
-                    <a href="${StellarExpert.opLink(tx)}">
+                    <a href="${StellarExpert.operationLink(tx)}">
                       from …${account.substring(52)}
                     </a>`
                 )
