@@ -83,13 +83,13 @@
         }
       }
 
-      namespace StellarExpert {
-        function txLink(tx: Operation): string {
+      const StellarExpert = {
+        opLink: op => {
           return (
-            `https://stellar.expert/explorer/public/tx/${tx.tx_id}#${tx.id}`
+            `https://stellar.expert/explorer/public/op/${op.tx_id}#${op.id}`
           );
         }
-      }
+      };
 
       // Constants
       const MTL =
@@ -189,7 +189,7 @@
               .explanation
               .push(
                 `delegated net share
-                <a href="${StellarExpert.txLink(tx)}">to …${tx.to.substring(52)}</a>`
+                <a href="${StellarExpert.opLink(tx)}">to …${tx.to.substring(52)}</a>`
               );
           }
           if (delegations.targets[accountRecord.account_id]) {
@@ -208,7 +208,7 @@
                   ([account, tx]) =>
                     `delegated net share
                     ${holderDict[account].balance / distributed * 100}%
-                    <a href="${StellarExpert.txLink(tx)}">
+                    <a href="${StellarExpert.opLink(tx)}">
                       from …${account.substring(52)}
                     </a>`
                 )
@@ -290,7 +290,7 @@
               .explanation
               .push(
                 `delegated MTL share
-                <a href="${StellarExpert.txLink(tx)}">to …${tx.to.substring(52)}</a>`
+                <a href="${StellarExpert.opLink(tx)}">to …${tx.to.substring(52)}</a>`
               );
           }
           if (fundInfo.delegations.targets[accountRecord.account_id]) {
@@ -309,7 +309,7 @@
                   ([account, tx]) =>
                     `delegated MTL share
                     ${fundInfo.holderDict[account].shareViaParent * 100}%
-                    <a href="${StellarExpert.txLink(tx)}">
+                    <a href="${StellarExpert.opLink(tx)}">
                       from …${account.substring(52)}
                     </a>`
                 )
