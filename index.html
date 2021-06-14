@@ -64,21 +64,22 @@
         class Asset {
           constructor(code: string, issuer: string);
         }
+
         class Server {
           constructor(url: string);
         }
-      }
 
-      interface AccountRecord {
-      }
+        interface AccountRecord {
+        }
 
-      interface Operation {
-        id: string; /// Operation identifier
-        tx_id: string; /// Identifier of enclosing transaction
+        interface Operation {
+          id: string; /// Operation identifier
+          tx_id: string; /// Identifier of enclosing transaction
+        }
       }
 
       // MTL types
-      class MtlAsset extends StellarSdk.Asset {
+      class Asset extends StellarSdk.Asset {
         fetch_limit: number;
         constructor(code: string, issuer: string, fetch_limit: number) {
           super(code, issuer);
@@ -86,10 +87,12 @@
         }
       }
 
-      interface MtlAccountRecord extends AccountRecord {
+      interface AccountRecord extends StellarSdk.AccountRecord {
         balance: number;
         balanceEffective: number;
         fundInfo: MtlFundInfo;
+        shareViaParent: number;
+        shareViaParentEffective: number;
       }
 
       interface MtlFundInfo {
@@ -98,7 +101,7 @@
 
       const StellarExpert = {
         // TODO function operationLink(op: Operation): string {
-        operationLink: (op: Operation) => {
+        operationLink: (op: StellarSdk.Operation) => {
           return (
             `https://stellar.expert/explorer/public/op/${op.tx_id}#${op.id}`
           );
@@ -107,13 +110,13 @@
 
       // Constants
       const MTL =
-        new MtlAsset(
+        new Asset(
           'MTL',
           'GACKTN5DAZGWXRWB2WLM6OPBDHAMT6SJNGLJZPQMEZBUR4JUGBX2UK7V',
           100
         );
       const MTLCITY =
-        new MtlAsset(
+        new Asset(
           'MTLCITY',
           'GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3',
           100
@@ -123,24 +126,25 @@
 
       const Server = new StellarSdk.Server('https://horizon.stellar.org');
 
-      function share(a: MtlAccountRecord): number {
+      // TODO make a method
+      function share(a: AccountRecord): number {
         return a.balance / a.fundInfo.distributed;
       }
 
-      function shareEffective(a: MtlAccountRecord): number {
+      // TODO make a method
+      function shareEffective(a: AccountRecord): number {
         return a.balanceEffective / a.fundInfo.distributed;
       }
 
-      function power(accountRecord) {
-        return share(accountRecord) + (accountRecord.shareViaParent || 0);
+      // TODO make a method
+      function power(a: AccountRecord): number {
+        return share(a) + (a.shareViaParent || 0); // TODO make non-null
       }
 
-      function powerEffective(accountRecord) {
-        const p =
-          shareEffective(accountRecord) + (accountRecord.shareViaParentEffective || 0);
-        if (isNaN(p))
-          console.log('powerEffective', p, accountRecord);
-        return p;
+      // TODO make a method
+      function powerEffective(a: AccountRecord) {
+        return shareEffective(a) + (a.shareViaParentEffective || 0);
+        // TODO make non-null
       }
 
       function mtlTreasuryShareEffective(fundInfo) {
