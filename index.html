@@ -90,13 +90,14 @@
       interface AccountRecord extends StellarSdk.AccountRecord {
         balance: number;
         balanceEffective: number;
-        fundInfo: MtlFundInfo;
+        fundInfo: FundInfo;
         shareViaParent: number;
         shareViaParentEffective: number;
       }
 
-      interface MtlFundInfo {
+      interface FundInfo {
         distributed: number;
+        holderDict: Record<string, AccountRecord>;
       }
 
       const StellarExpert = {
@@ -147,9 +148,10 @@
         // TODO make non-null
       }
 
-      function mtlTreasuryShareEffective(fundInfo) {
+      // TODO make a method
+      function mtlTreasuryShareEffective(fund: FundInfo) {
         return (
-          fundInfo.holderDict[MTL_TREASURY].balanceEffective / fundInfo.distributed
+          fund.holderDict[MTL_TREASURY].balanceEffective / fund.distributed
         );
       }
 
