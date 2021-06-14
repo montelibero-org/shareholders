@@ -15,4 +15,4 @@ with TemporaryDirectory() as dir:
     with open(ts, 'w') as f:
         f.write('\n' * (script_tag.sourceline - 1))
         f.write(script)
-    check_call(['tsc', '--noEmit', '--strict', ts])
+    check_call(['tsc', '--lib', 'es6,dom', '--noEmit', '--strict', ts])
