@@ -62,8 +62,16 @@
       // Bindings
       declare namespace StellarSdk {
         class Asset {
-          constructor(code: string, issuer: string)
+          constructor(code: string, issuer: string);
         }
+        class Server {
+          constructor(url: string);
+        }
+      }
+
+      interface Operation {
+        id: string; /// Operation identifier
+        tx_id: string; /// Identifier of enclosing transaction
       }
 
       // MTL types
@@ -72,6 +80,14 @@
         constructor(code: string, issuer: string, fetch_limit: number) {
           super(code, issuer);
           this.fetch_limit = fetch_limit;
+        }
+      }
+
+      namespace StellarExpert {
+        function txLink(tx: Operation): string {
+          return (
+            `https://stellar.expert/explorer/public/tx/${tx.tx_id}#${tx.id}`
+          );
         }
       }
 
@@ -92,11 +108,6 @@
         'GDX23CPGMQ4LN55VGEDVFZPAJMAUEHSHAMJ2GMCU2ZSHN5QF4TMZYPIS';
 
       const Server = new StellarSdk.Server('https://horizon.stellar.org');
-
-      const StellarExpert = {
-        txLink:
-          tx => `https://stellar.expert/explorer/public/tx/${tx.tx_id}#${tx.id}`,
-      }
 
       function share(accountRecord) {
         return accountRecord.balance / accountRecord.fundInfo.distributed;
