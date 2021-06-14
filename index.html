@@ -341,12 +341,17 @@
         }
       }
 
-      async function getDelegations(asset) {
-        if(localStorage.getItem(asset) !== null)
+      async function getDelegations(asset)
+      {
+        let currentData :String = localStorage.getItem(asset);
+
+        if(currentData !== null)
         {
-            return localStorage.getItem(asset);
-        } 
-        else if(localStorage.getItem(asset) === null)
+            let currentJSONStringData = JSON.stringify(currentData);
+
+            return JSON.parse(currentJSONStringData);
+        }
+        else
         {
             const response =
              await
