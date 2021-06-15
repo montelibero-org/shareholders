@@ -60,44 +60,92 @@
 
     <script id="main" type="text/typescript">
       // Bindings
+      declare namespace Horizon {
+        interface BalanceLineNative {
+          balance: string;
+        }
+
+        export interface BalanceLineAsset {
+          balance: string;
+          asset_code: string;
+          asset_issuer: string;
+        }
+
+        type BalanceLine = BalanceLineNative | BalanceLineAsset;
+      }
+
       declare namespace StellarSdk {
+        interface AccountCallBuilder {
+          forAsset: (asset: Asset) => AccountCallBuilder;
+          limit: (limit: number) => AccountCallBuilder;
+          call: () => Promise<CollectionPage<AccountRecord>>;
+        }
+
         class Asset {
           constructor(code: string, issuer: string);
+          code: string;
+          issuer: string;
+        }
+
+        interface CollectionPage<T> {
+          records: T[];
         }
 
         class Server {
           constructor(url: string);
+          accounts: () => AccountCallBuilder;
         }
 
         interface AccountRecord {
+          account_id: string;
+          balances: Horizon.BalanceLine[];
         }
 
         interface Operation {
+          from: string; /// Source account id
           id: string; /// Operation identifier
+          to: string; /// Recipent account id
           tx_id: string; /// Identifier of enclosing transaction
         }
       }
 
       // MTL types
-      class Asset extends StellarSdk.Asset {
-        fetch_limit: number;
+      class Asset {
+        base: StellarSdk.Asset;
         constructor(code: string, issuer: string, fetch_limit: number) {
-          super(code, issuer);
+          this.base = new StellarSdk.Asset(code, issuer);
           this.fetch_limit = fetch_limit;
         }
+        fetch_limit: number;
+        code(): string {return this.base.code;}
+        issuer(): string {return this.base.issuer;}
       }
 
-      interface AccountRecord extends StellarSdk.AccountRecord {
+      interface Account {
+        base: StellarSdk.AccountRecord;
         balance: number;
         balanceEffective: number;
-        fundInfo: FundInfo;
+        explanation: string[];
+        fundInfo: FundInfoBase;
         shareViaParent: number;
         shareViaParentEffective: number;
       }
 
-      interface FundInfo {
+      interface Delegations {
+        sources: Record<string, StellarSdk.Operation | null>;
+        targets: Record<string, Record<string, StellarSdk.Operation>>;
+      }
+
+      interface FundInfoBase {
         distributed: number;
-        holderDict: Record<string, AccountRecord>;
+      }
+
+      interface FundInfo {
+        base: FundInfoBase;
+        asset: Asset;
+        delegations: Delegations;
+        holderDict: Record<string, Account>;
+        supply: number;
       }
 
       const StellarExpert = {
@@ -128,39 +176,40 @@
       const Server = new StellarSdk.Server('https://horizon.stellar.org');
 
       // TODO make a method
-      function share(a: AccountRecord): number {
-        return a.balance / a.fundInfo.distributed;
+      function share(account: Account): number {
+        return account.balance / account.fundInfo.distributed;
       }
 
       // TODO make a method
-      function shareEffective(a: AccountRecord): number {
-        return a.balanceEffective / a.fundInfo.distributed;
+      function shareEffective(account: Account): number {
+        return account.balanceEffective / account.fundInfo.distributed;
       }
 
       // TODO make a method
-      function power(a: AccountRecord): number {
-        return share(a) + (a.shareViaParent || 0); // TODO make non-null
+      function power(account: Account): number {
+        return share(account) + (account.shareViaParent || 0);
+        // TODO make non-null
       }
 
       // TODO make a method
-      function powerEffective(a: AccountRecord) {
-        return shareEffective(a) + (a.shareViaParentEffective || 0);
+      function powerEffective(account: Account) {
+        return shareEffective(account) + (account.shareViaParentEffective || 0);
         // TODO make non-null
       }
 
       // TODO make a method
       function mtlTreasuryShareEffective(fund: FundInfo) {
         return (
-          fund.holderDict[MTL_TREASURY].balanceEffective / fund.distributed
+          fund.holderDict[MTL_TREASURY].balanceEffective / fund.base.distributed
         );
       }
 
-      async function getFundInfo(asset) {
+      async function getFundInfo(asset: Asset): Promise<FundInfo> {
         const holders =
           await
             Server
             .accounts()
-            .forAsset(asset)
+            .forAsset(asset.base)
             .limit(asset.fetch_limit)
             .call()
             .then(({records}) => records);
@@ -169,162 +218,178 @@
 
         let supply = 0;
         let distributed = 0;
-        let holderDict = {};
-        for (const accountRecord of holders) {
-          holderDict[accountRecord.account_id] = accountRecord;
-          accountRecord.explanation = [];
-
+        let holderDict: Record<string, StellarSdk.AccountRecord> = {};
+        let balances: Record<string, number> = {};
+        for (const account of holders) {
           const [balance] =
-            accountRecord
+            account
             .balances
             .filter(
-              ({asset_code, asset_issuer}) =>
-                asset_code   == asset.code &&
-                asset_issuer == asset.issuer
+              balanceLine =>
+                'asset_code' in balanceLine &&
+                balanceLine.asset_code   == asset.code() &&
+                balanceLine.asset_issuer == asset.issuer()
             )
             .map(({balance}) => +balance);
-          accountRecord.balance = balance;
 
           supply += balance;
 
-          if (accountRecord.account_id != MTL_TREASURY || asset != MTL)
+          if (account.account_id != MTL_TREASURY || asset != MTL)
             distributed += balance;
+
+          holderDict[account.account_id] = account;
+          balances[account.account_id] = balance;
         }
 
-        const fundInfo = {
+        const fundInfo: FundInfo = {
+          base: {distributed: distributed},
           asset: asset,
           delegations: delegations,
-          distributed: distributed,
-          holderDict: holderDict,
+          holderDict: {},
           supply: supply,
         };
 
         for (const accountRecord of holders) {
-          accountRecord.fundInfo = fundInfo;
-          accountRecord.balanceEffective = accountRecord.balance;
-          if (delegations.sources[accountRecord.account_id]) {
-            const tx = delegations.sources[accountRecord.account_id];
-            accountRecord.balanceEffective = 0;
-            accountRecord
+          const account_id = accountRecord.account_id;
+          const account: Account = {
+            base: accountRecord,
+            balance: balances[account_id],
+            balanceEffective: balances[account_id],
+            explanation: [],
+            fundInfo: fundInfo.base,
+            shareViaParent: 0,
+            shareViaParentEffective: 0,
+          };
+          const op = delegations.sources[account_id];
+          if (op) {
+            account.balanceEffective = 0;
+            account
               .explanation
               .push(
                 `delegated net share
-                <a href="${StellarExpert.operationLink(tx)}">to …${tx.to.substring(52)}</a>`
+                <a href="${StellarExpert.operationLink(op)}">
+                  to …${op.to.substring(52)}
+                </a>`
               );
           }
-          if (delegations.targets[accountRecord.account_id]) {
-            accountRecord.balanceEffective +=
+          if (delegations.targets[account_id]) {
+            account.balanceEffective +=
               Object
-              .keys(delegations.targets[accountRecord.account_id])
-              .map(account => holderDict[account].balance)
+              .keys(delegations.targets[account_id])
+              .map(accid => balances[accid])
               .reduce((a, b) => a + b, 0);
-            accountRecord.explanation =
-              accountRecord
+            account.explanation =
+              account
               .explanation
               .concat(
                 Object
-                .entries(delegations.targets[accountRecord.account_id])
+                .entries(delegations.targets[account_id])
                 .map(
-                  ([account, tx]) =>
+                  ([account, op]) =>
                     `delegated net share
-                    ${holderDict[account].balance / distributed * 100}%
-                    <a href="${StellarExpert.operationLink(tx)}">
+                    ${balances[account] / distributed * 100}%
+                    <a href="${StellarExpert.operationLink(op)}">
                       from …${account.substring(52)}
                     </a>`
                 )
               );
           }
 
-          accountRecord
-            .explanation
-            .push(
-              `net share = ${share(accountRecord) * 100}%`
-            );
+          account.explanation.push(`net share = ${share(account) * 100}%`);
 
-          if (accountRecord.balanceEffective != accountRecord.balance) {
-            accountRecord
+          if (account.balanceEffective != account.balance) {
+            account
               .explanation
               .push(
-                `balance with delegation = ${accountRecord.balanceEffective}`,
+                `balance with delegation = ${account.balanceEffective}`,
                 `share with delegation =
-                  ${shareEffective(accountRecord)}`
+                  ${shareEffective(account)}`
               );
           }
+
+          fundInfo.holderDict[account_id] = account;
         }
 
         return fundInfo;
       }
 
-      function setHoldersStats(fundInfo, supply_text, distributed_text) {
-        supply_text.innerText = fundInfo.supply;
+      function setHoldersStats(
+        fundInfo: FundInfo,
+        supply_text: HTMLSpanElement,
+        distributed_text?: HTMLSpanElement,
+      ) {
+        supply_text.innerText = fundInfo.supply.toString();
         if (distributed_text)
-          distributed_text.innerText = fundInfo.distributed;
+          distributed_text.innerText = fundInfo.base.distributed.toString();
       }
 
-      function mergeMtlHolders(fundInfo, parentFundInfo) {
-        let sharesInParent = {};
-        for (const accountRecord of Object.values(parentFundInfo.holderDict)) {
-          sharesInParent[accountRecord.account_id] =
-            share(accountRecord, parentFundInfo.distributed);
+      function mergeMtlHolders(fundInfo: FundInfo, parentFundInfo: FundInfo) {
+        let sharesInParent: Record<string, number> = {};
+        for (const account of Object.values(parentFundInfo.holderDict)) {
+          sharesInParent[account.base.account_id] = share(account);
         }
 
-        for (const accountRecord of Object.values(fundInfo.holderDict)) {
-          accountRecord.shareViaParent = 0;
-          if (accountRecord.account_id in sharesInParent) {
-            const shareInParent = sharesInParent[accountRecord.account_id];
-            accountRecord.shareViaParent =
+        for (const account of Object.values(fundInfo.holderDict)) {
+          const {account_id} = account.base;
+          if (account_id in sharesInParent) {
+            const shareInParent = sharesInParent[account_id];
+            account.shareViaParent =
               shareInParent * mtlTreasuryShareEffective(fundInfo);
-            accountRecord
+            account
               .explanation
               .push(
                 `share in MTL = ${shareInParent * 100}%`,
-                `share via MTL = ${accountRecord.shareViaParent * 100}%`
+                `share via MTL = ${account.shareViaParent * 100}%`
               );
           }
         }
 
         // append parent holders
-        for (const accountRecord of Object.values(parentFundInfo.holderDict)) {
-          if (!(accountRecord.account_id in fundInfo.holderDict)) {
-            accountRecord.balance = 0;
-            accountRecord.balanceEffective = 0;
-            const shareInParent = sharesInParent[accountRecord.account_id];
-            accountRecord.shareViaParent =
+        for (const account of Object.values(parentFundInfo.holderDict)) {
+          const {account_id} = account.base;
+          if (!(account_id in fundInfo.holderDict)) {
+            account.balance = 0;
+            account.balanceEffective = 0;
+            const shareInParent = sharesInParent[account_id];
+            account.shareViaParent =
               shareInParent * mtlTreasuryShareEffective(fundInfo);
-            accountRecord.explanation =
+            account.explanation =
               [
                 'account came from MTL',
                 `share in MTL = ${shareInParent * 100}%`,
-                `share via MTL = ${accountRecord.shareViaParent * 100}%`
+                `share via MTL = ${account.shareViaParent * 100}%`
               ];
-            fundInfo.holderDict[accountRecord.account_id] = accountRecord;
+            fundInfo.holderDict[account_id] = account;
           }
         }
 
-        for (const accountRecord of Object.values(fundInfo.holderDict)) {
-          accountRecord.shareViaParentEffective = accountRecord.shareViaParent;
-          if (fundInfo.delegations.sources[accountRecord.account_id]) {
-            const tx = fundInfo.delegations.sources[accountRecord.account_id];
-            accountRecord.shareViaParentEffective = 0;
-            accountRecord
+        for (const account of Object.values(fundInfo.holderDict)) {
+          const {account_id} = account.base;
+          account.shareViaParentEffective = account.shareViaParent;
+          const delegation = fundInfo.delegations.sources[account_id];
+          if (delegation) {
+            account.shareViaParentEffective = 0;
+            account
               .explanation
               .push(
                 `delegated MTL share
-                <a href="${StellarExpert.operationLink(tx)}">to …${tx.to.substring(52)}</a>`
+                <a href="${StellarExpert.operationLink(delegation)}">
+                  to …${delegation.to.substring(52)}
+                </a>`
               );
           }
-          if (fundInfo.delegations.targets[accountRecord.account_id]) {
-            accountRecord.shareViaParentEffective +=
+          if (fundInfo.delegations.targets[account_id]) {
+            account.shareViaParentEffective +=
               Object
-              .keys(fundInfo.delegations.targets[accountRecord.account_id])
+              .keys(fundInfo.delegations.targets[account_id])
               .map(account => fundInfo.holderDict[account].shareViaParent)
               .reduce((a, b) => a + b, 0);
-            accountRecord.explanation =
-              accountRecord
+            account.explanation =
+              account
               .explanation
               .concat(
                 Object
-                .entries(fundInfo.delegations.targets[accountRecord.account_id])
+                .entries(fundInfo.delegations.targets[account_id])
                 .map(
                   ([account, tx]) =>
                     `delegated MTL share
@@ -338,27 +403,30 @@
         }
       }
 
-      function appendHoldersTableRow(fundInfo, table, accountRecord) {
+      function appendHoldersTableRow(
+        fundInfo: FundInfo, table: HTMLTableElement, account: Account
+      ) {
+        const {account_id} = account.base;
         const name_html =
-          accountRecord.account_id == MTL_TREASURY
+          account_id == MTL_TREASURY
           ? 'MTL Treasury'
           : `<a
               href=
-                "https://stellar.expert/explorer/public/account/${accountRecord.account_id}"
+                "https://stellar.expert/explorer/public/account/${account_id}"
               rel="nofollow noreferrer noopener"
-              target="_blank">
-              <nobr>
-                …${accountRecord.account_id.substring(52)}
-              </nobr>
+              target="_blank"
+              >
+              <nobr>…${account_id.substring(52)}</nobr>
             </a>`;
 
-        // TODO show the final power of the vote given the participation in the MTL and the delegation transactions
+        // TODO show the final power of the vote given the participation
+        //   in the MTL and the delegation transactions
         // TODO if vote power is less than 0.01 then show "<0.01%"
         // TODO don't show accounts with 0 vote power
         const power_html =
-          (power(accountRecord) != 0 && powerEffective(accountRecord) == 0)
-          ? `<s title="Delegated">${(power(accountRecord) * 100).toFixed(2)}%</s>`
-          : `${(powerEffective(accountRecord) * 100).toFixed(2)}%`;
+          (power(account) && powerEffective(account) == 0)
+          ? `<s title="Delegated">${(power(account) * 100).toFixed(2)}%</s>`
+          : `${(powerEffective(account) * 100).toFixed(2)}%`;
 
         const tr = table.appendChild(document.createElement('tr'));
         // TODO calculate Rank for accounts, starts from 1
@@ -372,37 +440,37 @@
         tr.appendChild(document.createElement('td')).innerText = 'S';
         tr.appendChild(document.createElement('td')).innerHTML = name_html;
         tr.appendChild(document.createElement('td')).innerText =
-          accountRecord.balance;
+          account.balance.toString();
         // TODO remove this column later
         tr.appendChild(document.createElement('td')).innerHTML =
-          accountRecord.explanation.join(', ');
+          account.explanation.join(', ');
       }
 
-      function makeHoldersTable(fundInfo, table) {
+      function makeHoldersTable(fundInfo: FundInfo, table: HTMLTableElement) {
         // sort by powerEffective descending
         const holders =
           Object
           .values(fundInfo.holderDict)
           .sort((a, b) => powerEffective(b) - powerEffective(a));
 
-        for (const accountRecord of holders) {
-          if (accountRecord.account_id != MTL_TREASURY)
-            appendHoldersTableRow(fundInfo, table, accountRecord);
+        for (const account of holders) {
+          if (account.base.account_id != MTL_TREASURY)
+            appendHoldersTableRow(fundInfo, table, account);
         }
       }
 
-      async function getDelegations(asset) {
+      async function getDelegations(asset: Asset): Promise<Delegations> {
         const response =
           await
             fetch(
               'https://api.stellar.expert/explorer/public/payments?' +
-              `asset=${asset.code}-${asset.issuer}&limit=200&order=desc`
+              `asset=${asset.code()}-${asset.issuer()}&limit=200&order=desc`
             );
         const responseJson = await response.json();
         const payments = responseJson._embedded.records;
 
-        let sources = {};
-        let targets = {};
+        let sources: Record<string, StellarSdk.Operation | null> = {};
+        let targets: Record<string, Record<string, StellarSdk.Operation>> = {};
         for (const payment of payments) {
           if (payment.from in sources)
             continue; // keep only first met (last happened) delegation
@@ -414,7 +482,7 @@
               targets[payment.to][payment.from] = payment;
               break;
             case 'undelegate':
-              sources[payment.from] = false;
+              sources[payment.from] = null;
               break;
           }
         }
@@ -422,6 +490,14 @@
         return {sources: sources, targets: targets};
       }
 
+      // HTML bindings
+      declare const mtl_distributed_text: HTMLSpanElement;
+      declare const mtl_holders_table: HTMLTableElement;
+      declare const mtl_supply_text: HTMLSpanElement;
+      declare const mtlcity_holders_table: HTMLTableElement;
+      declare const mtlcity_supply_text: HTMLSpanElement;
+
+      // entry point
       (async () => {
         const mtlFundInfo = await getFundInfo(MTL);
         setHoldersStats(mtlFundInfo, mtl_supply_text, mtl_distributed_text);

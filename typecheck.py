@@ -2,7 +2,7 @@
 
 from os import path
 from bs4 import BeautifulSoup
-from subprocess import check_call
+from subprocess import CalledProcessError, check_call
 from tempfile import TemporaryDirectory
 
 html = open('index.html').read()
@@ -15,4 +15,7 @@ with TemporaryDirectory() as dir:
     with open(ts, 'w') as f:
         f.write('\n' * (script_tag.sourceline - 1))
         f.write(script)
-    check_call(['tsc', '--lib', 'es6,dom', '--noEmit', '--strict', ts])
+    try:
+        check_call(['tsc', '--lib', 'es2017,dom', '--noEmit', '--strict', ts])
+    except CalledProcessError as e:
+        exit(e.returncode)
