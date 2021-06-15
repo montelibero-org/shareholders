@@ -104,6 +104,7 @@
         interface Operation {
           from: string; /// Source account id
           id: string; /// Operation identifier
+          memo: string;
           to: string; /// Recipent account id
           tx_id: string; /// Identifier of enclosing transaction
         }
@@ -117,8 +118,8 @@
           this.fetch_limit = fetch_limit;
         }
         fetch_limit: number;
-        code(): string {return this.base.code;}
-        issuer(): string {return this.base.issuer;}
+        get code(): string {return this.base.code;}
+        get issuer(): string {return this.base.issuer;}
       }
 
       interface Account {
@@ -147,6 +148,15 @@
         holderDict: Record<string, Account>;
         supply: number;
       }
+
+      // Extensions to libs
+      const Stellar = {
+        isAsset(balanceLine: Horizon.BalanceLine):
+          balanceLine is Horizon.BalanceLineAsset
+        {
+          return 'asset_code' in balanceLine;
+        }
+      };
 
       const StellarExpert = {
         // TODO function operationLink(op: Operation): string {
@@ -205,16 +215,17 @@
       }
 
       async function getFundInfo(asset: Asset): Promise<FundInfo> {
-        const holders =
-          await
-            Server
-            .accounts()
-            .forAsset(asset.base)
-            .limit(asset.fetch_limit)
-            .call()
-            .then(({records}) => records);
+        const holdersP =
+          Server
+          .accounts()
+          .forAsset(asset.base)
+          .limit(asset.fetch_limit)
+          .call()
+          .then(({records}) => records);
 
         const delegations = await getDelegations(asset);
+
+        const holders = await holdersP;
 
         let supply = 0;
         let distributed = 0;
@@ -225,10 +236,10 @@
             account
             .balances
             .filter(
-              balanceLine =>
-                'asset_code' in balanceLine &&
-                balanceLine.asset_code   == asset.code() &&
-                balanceLine.asset_issuer == asset.issuer()
+              balance =>
+                Stellar.isAsset(balance) &&
+                balance.asset_code   == asset.code &&
+                balance.asset_issuer == asset.issuer
             )
             .map(({balance}) => +balance);
 
@@ -464,10 +475,10 @@
           await
             fetch(
               'https://api.stellar.expert/explorer/public/payments?' +
-              `asset=${asset.code()}-${asset.issuer()}&limit=200&order=desc`
+              `asset=${asset.code}-${asset.issuer}&limit=200&order=desc`
             );
         const responseJson = await response.json();
-        const payments = responseJson._embedded.records;
+        const payments: StellarSdk.Operation[] = responseJson._embedded.records;
 
         let sources: Record<string, StellarSdk.Operation | null> = {};
         let targets: Record<string, Record<string, StellarSdk.Operation>> = {};

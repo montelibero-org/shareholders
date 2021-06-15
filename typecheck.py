@@ -16,6 +16,6 @@ with TemporaryDirectory() as dir:
         f.write('\n' * (script_tag.sourceline - 1))
         f.write(script)
     try:
-        check_call(['tsc', '--lib', 'es2017,dom', '--noEmit', '--strict', ts])
+        check_call(['tsc', '--lib', 'es2017,dom', '--noEmit', '--strict', '--target', 'ES5', ts])
     except CalledProcessError as e:
         exit(e.returncode)
