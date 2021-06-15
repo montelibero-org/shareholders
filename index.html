@@ -391,35 +391,45 @@
         }
       }
 
-      async function getDelegations(asset) {
-        const response =
-          await
-            fetch(
-              'https://api.stellar.expert/explorer/public/payments?' +
-              `asset=${asset.code}-${asset.issuer}&limit=200&order=desc`
-            );
-        const responseJson = await response.json();
-        const payments = responseJson._embedded.records;
+      async function getDelegations(asset)
+      {
+        let currentData :String = localStorage.getItem(asset);
 
-        let sources = {};
-        let targets = {};
-        for (const payment of payments) {
-          if (payment.from in sources)
-            continue; // keep only first met (last happened) delegation
-          switch (payment.memo) {
-            case 'delegate':
-              sources[payment.from] = payment;
-              if (!(targets[payment.to]))
-                targets[payment.to] = {};
-              targets[payment.to][payment.from] = payment;
-              break;
-            case 'undelegate':
-              sources[payment.from] = false;
-              break;
-          }
+        if(currentData !== null)
+        {
+            let currentJSONStringData = JSON.stringify(currentData);
+
+            return JSON.parse(currentJSONStringData);
         }
-
-        return {sources: sources, targets: targets};
+        else
+        {
+            const response =
+             await
+                fetch(
+                'https://api.stellar.expert/explorer/public/payments?' +
+                `asset=${asset.code}-${asset.issuer}&limit=200&order=desc`
+                );
+            const responseJson = await response.json();
+            const payments = responseJson._embedded.records;
+            let sources = {};
+            let targets = {};
+            for (const payment of payments) {
+                if (payment.from in sources)
+                    continue; // keep only first met (last happened) delegation
+                switch (payment.memo) {
+                    case 'delegate':
+                    sources[payment.from] = payment;
+                    if (!(targets[payment.to]))
+                    targets[payment.to] = {};
+                    targets[payment.to][payment.from] = payment;
+                    break;
+                    case 'undelegate':
+                    sources[payment.from] = false;
+                    break;
+                }
+            }
+            return {sources: sources, targets: targets};
+        }
       }
 
       (async () => {
