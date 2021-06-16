@@ -355,7 +355,6 @@
                 'https://api.stellar.expert/explorer/public/payments?' +
                 `asset=${asset.code}-${asset.issuer}&limit=200&order=desc`
                 );
-            cache.add(response);
             const responseJson = await response.json();
             const payments = responseJson._embedded.records;
             let sources = {};
@@ -375,7 +374,9 @@
                     break;
                 }
             }
-            return {sources: sources, targets: targets};
+            let delegates = {sources: sources, targets: targets};
+            cache.add(delegates);
+            return delegates;
         }
       }
 
