@@ -5,58 +5,109 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- BOOTSTRAP 4 CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="bower_components/stellar-sdk/stellar-sdk.js"></script>
     <title>Shareholders of MTL and affiliates</title>
   </head>
   <body>
-    <h1>Shareholders of MTL and affiliates</h1>
-    <ul>
-      <li><a href="#MTL">MTL</a></li>
-      <li><a href="#MTLCITY">MTLCITY</a></li>
-    </ul>
+    <div class="ribbon right">
+      <a href="https://github.com/montelibero-org/shareholders">Fork me on GitHub</a>
+    </div>
+    <div class="container py-5">
+      <header class="pb-5 text-center text-white">
+        <h1 class="display-4">Shareholders of MTL and affiliates</h1>
+      </header>
 
-    <a name="MTL"><h2>MTL Shareholders</h2></a>
-    <p>
-      <a
-        href=
-          "https://stellar.expert/explorer/public/asset/MTL-GACKTN5DAZGWXRWB2WLM6OPBDHAMT6SJNGLJZPQMEZBUR4JUGBX2UK7V"
-        rel="nofollow noreferrer noopener"
-        target="_blank"
-        >
-        View on Network Explorer
-      </a>
-    </p>
-    <p>Supply: <span id="mtl_supply_text">0</span></p>
-    <p>Distributed: <span id="mtl_distributed_text">0</span></p>
-    <table id="mtl_holders_table">
-      <th title="Rank">#</th>
-      <th>Vote Power</th>
-      <th title="Signer">S</th>
-      <th>Account</th>
-      <th>MTL</th>
-      <th>Explanation</th>
-    </table>
+      <!-- Tabs -->
 
-    <a name="MTLCITY"><h2>MTLCITY Shareholders</h2></a>
-    <p>
-      <a
-        href=
-          "https://stellar.expert/explorer/public/asset/MTLCITY-GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3"
-        rel="nofollow noreferrer noopener"
-        target="_blank"
-        >
-        View on Network Explorer
-      </a>
-    </p>
-    <p>Supply: <span id="mtlcity_supply_text">0</span></p>
-    <table id="mtlcity_holders_table">
-      <th title="Rank">#</th>
-      <th>Vote Power</th>
-      <th title="Signer">S</th>
-      <th>Account</th>
-      <th>MTLCITY</th>
-      <th>Explanation</th>
-    </table>
+      <div class="p-2">
+        <ul class="nav nav-pills lined with-arrow nav-justified mb-3" id="pills-tab" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="pills-mtl-tab" data-toggle="pill" 
+            href="#pills-mtl" role="tab" aria-controls="pills-mtl" 
+            aria-selected="true">MTL</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="pills-mtlcity-tab" data-toggle="pill" 
+            href="#pills-mtlcity" role="tab" aria-controls="pills-mtlcity" 
+            aria-selected="false">MTLCITY</a>
+          </li>
+          
+        </ul>
+        <div class="tab-content" id="pills-tabContent">
+          <div class="tab-pane fade text-center p-2 mb-3 show active" id="pills-mtl" role="tabpanel" 
+            aria-labelledby="pills-mtl-tab" name="MTL">
+            <h2 class="text-center text-white">MTL Shareholders</h2></a>
+            <p>
+              <a class="btn btn-outline-warning btn-sm m-2 text-white"
+                href=
+                  "https://stellar.expert/explorer/public/asset/MTL-GACKTN5DAZGWXRWB2WLM6OPBDHAMT6SJNGLJZPQMEZBUR4JUGBX2UK7V"
+                rel="nofollow noreferrer noopener"
+                target="_blank"
+                >
+                View on Network Explorer 
+              </a>
+            </p>
+            <p>Supply: <span id="mtl_supply_text">0</span></p>
+            <p>Distributed: <span id="mtl_distributed_text">0</span></p>
+            <table class="table table-striped" id="mtl_holders_table">
+              <thead class="text-warning">
+                <tr>
+                  <th title="Rank">#</th>
+                  <th>Vote Power</th>
+                  <th title="Signer">S</th>
+                  <th>Account</th>
+                  <th>MTL</th>
+                  <th>Explanation</th>
+                </tr>
+              </thead>
+              <tbody class="text-white">
+                <tr>
+
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="tab-pane fade text-center p-2 mb-3" id="pills-mtlcity" role="tabpanel" 
+            aria-labelledby="pills-mtlcity-tab" name="MTLCITY">
+            <h2 class="text-center text-white">MTLCITY Shareholders</h2></a>
+            <p>
+              <a class="btn btn-outline-warning btn-sm m-2 text-white"
+                href=
+                  "https://stellar.expert/explorer/public/asset/MTLCITY-GDUI7JVKWZV4KJVY4EJYBXMGXC2J3ZC67Z6O5QFP4ZMVQM2U5JXK2OK3"
+                rel="nofollow noreferrer noopener"
+                target="_blank"
+                >
+                View on Network Explorer
+              </a>
+            </p>
+            <p>Supply: <span id="mtlcity_supply_text">0</span></p>
+            <table class="table table-striped" id="mtlcity_holders_table">
+              <thead class="text-warning">
+                <tr>
+                  <th title="Rank">#</th>
+                  <th>Vote Power</th>
+                  <th title="Signer">S</th>
+                  <th>Account</th>
+                  <th>MTLCITY</th>
+                  <th>Explanation</th>
+                </tr>
+              </thead>
+              <tbody class="text-white">
+                <tr>
+
+                </tr>
+              </tbody>
+            </table> 
+          </div>
+          
+        </div>
+      </div> 
+    </div>
+      <!-- end Tabs -->
 
     <script id="main" type="text/typescript">
       // Bindings
@@ -529,5 +580,9 @@
       src="https://rawgit.com/basarat/typescript-script/master/transpiler.js">
     </script>
 
+    <!-- BOOTSTRAP 4 -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
 </html>

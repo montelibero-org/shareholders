@@ -1,3 +1,85 @@
+body {
+  min-height: 100vh;
+
+  background-color: #faf7e7;
+  background-image: linear-gradient(to right, #434668 10%, #171825 100%);
+}
+
+p{
+  color: #fcfcfc;
+}
+
+/* github ribbons */
+.ribbon{
+  position: absolute; 
+  top: 42px;
+  width: 200px;
+  padding: 1px 0;
+  background: #ebbe1d;
+  color: #ffffff;
+
+  -moz-box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  -webkit-box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.ribbon.right{
+  right: -42px;
+  -moz-transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+.ribbon a, 
+.ribbon a:visited, 
+.ribbon a:active, 
+.ribbon a:hover{
+  display: block;
+  padding: 1px 0;
+  height: 24px;
+  line-height: 24px;
+
+  color: inherit;  
+  text-align: center;
+  text-decoration: none;
+  font-family: 'Cabin Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+
+  border: 1px dashed rgba(255, 255, 255, 0.993);
+
+  -moz-text-shadow: 0 0 10px rgba(0,0,0,0.31);
+  -webkit-text-shadow: 0 0 10px rgba(0,0,0,0.31);
+  text-shadow: 0 0 10px rgba(0,0,0,0.31);
+}
+
+/* lined tabs */
+.lined .nav-link {
+  border: none;
+  border-bottom: 1px solid #f5f4f1;
+  font-weight: 700;
+  color: #fcfcfc;
+}
+
+.nav-pills .nav-item .nav-link:hover{
+  background-color: transparent;
+  border-bottom: 2px solid #ebbe1d;
+}
+
+.nav-pills .nav-item .nav-link.active {
+  background-color: transparent;
+  border-bottom: 3px solid #ebbe1d;
+}
+  
+.table thead{
+  background-color: rgba(255, 255, 255, 0.39);
+}
 td.power {
   text-align: right;
+}
+
+td{
+  color: white;
 }
