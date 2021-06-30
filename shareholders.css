@@ -1,8 +1,14 @@
-body {
-  min-height: 100vh;
+html {
+  height: 100%;
+}
 
-  background-color: #faf7e7;
-  background-image: linear-gradient(to right, #434668 10%, #171825 100%);
+body {
+  background-color: #ffffff;
+  height: 100%;
+  margin: 0;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-image:  linear-gradient(to right, #434668 0%, #171825 100%);
 }
 
 p{
@@ -14,7 +20,7 @@ p{
   position: absolute; 
   top: 42px;
   width: 200px;
-  padding: 1px 0;
+  /* padding: 1px 0; */
   background: #ebbe1d;
   color: #ffffff;
 
