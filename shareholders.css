@@ -1,7 +1,11 @@
 body {
   min-height: 100vh;
+  overflow-x: hidden;
 
   background-color: #faf7e7;
+  margin: 0;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   background-image: linear-gradient(to right, #434668 10%, #171825 100%);
 }
 
