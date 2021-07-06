@@ -83,3 +83,18 @@ td.power {
 td{
   color: white;
 }
+
+.table {
+  counter-reset: serial-number;  
+}
+
+.table td:first-child:before {
+  counter-increment: serial-number;  
+  content: counter(serial-number);  
+}
+
+.table tr:nth-child(n + 2):not(:nth-child(n+22)) > td,
+.table tr:nth-child(n + 2):not(:nth-child(n+22)) td a{
+  color: rgb(255, 217, 0);
+  font-weight: 800;
+}
