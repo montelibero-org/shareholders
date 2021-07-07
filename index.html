@@ -23,19 +23,19 @@
       <div class="p-2">
         <ul class="nav nav-pills lined with-arrow nav-justified mb-3" id="pills-tab" role="tablist">
           <li class="nav-item">
-            <a class="nav-link active" id="pills-mtl-tab" data-toggle="pill" 
-            href="#pills-mtl" role="tab" aria-controls="pills-mtl" 
+            <a class="nav-link active" id="pills-mtl-tab" data-toggle="pill"
+            href="#pills-mtl" role="tab" aria-controls="pills-mtl"
             aria-selected="true">MTL</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" id="pills-mtlcity-tab" data-toggle="pill" 
-            href="#pills-mtlcity" role="tab" aria-controls="pills-mtlcity" 
+            <a class="nav-link" id="pills-mtlcity-tab" data-toggle="pill"
+            href="#pills-mtlcity" role="tab" aria-controls="pills-mtlcity"
             aria-selected="false">MTLCITY</a>
           </li>
-          
+
         </ul>
         <div class="tab-content" id="pills-tabContent">
-          <div class="tab-pane fade text-center p-2 mb-3 show active" id="pills-mtl" role="tabpanel" 
+          <div class="tab-pane fade text-center p-2 mb-3 show active" id="pills-mtl" role="tabpanel"
             aria-labelledby="pills-mtl-tab" name="MTL">
             <h2 class="text-center text-white">MTL Shareholders</h2></a>
             <p>
@@ -45,31 +45,27 @@
                 rel="nofollow noreferrer noopener"
                 target="_blank"
                 >
-                View on Network Explorer 
+                View on Network Explorer
               </a>
             </p>
             <p>Supply: <span id="mtl_supply_text">0</span></p>
             <p>Distributed: <span id="mtl_distributed_text">0</span></p>
             <table class="table table-striped" id="mtl_holders_table">
-              <thead class="text-warning">
+              <thead>
                 <tr>
                   <th title="Rank">#</th>
                   <th>Vote Power</th>
-                  <th title="Signer">S</th>
+                  <th title="Signer">Status</th>
                   <th>Account</th>
                   <th>MTL</th>
                   <th>Explanation</th>
                 </tr>
               </thead>
-              <tbody class="text-white">
-                <tr>
-
-                </tr>
-              </tbody>
+              <!-- <tbody class="text-white"></tbody> -->
             </table>
           </div>
 
-          <div class="tab-pane fade text-center p-2 mb-3" id="pills-mtlcity" role="tabpanel" 
+          <div class="tab-pane fade text-center p-2 mb-3" id="pills-mtlcity" role="tabpanel"
             aria-labelledby="pills-mtlcity-tab" name="MTLCITY">
             <h2 class="text-center text-white">MTLCITY Shareholders</h2></a>
             <p>
@@ -84,28 +80,24 @@
             </p>
             <p>Supply: <span id="mtlcity_supply_text">0</span></p>
             <table class="table table-striped" id="mtlcity_holders_table">
-              <thead class="text-warning">
+              <thead>
                 <tr>
                   <th title="Rank">#</th>
                   <th>Vote Power</th>
-                  <th title="Signer">S</th>
+                  <th title="Signer">Status</th>
                   <th>Account</th>
                   <th>MTLCITY</th>
                   <th>Explanation</th>
                 </tr>
               </thead>
-              <tbody class="text-white">
-                <tr>
-
-                </tr>
-              </tbody>
-            </table> 
+              <!-- <tbody class="text-white"></tbody> -->
+            </table>
           </div>
-          
+
         </div>
-      </div> 
+      </div>
     </div>
-      <!-- end Tabs -->
+    <!-- end Tabs -->
 
     <script id="main" type="text/typescript">
       // Bindings
@@ -464,7 +456,7 @@
       }
 
       function appendHoldersTableRow(
-        fundInfo: FundInfo, table: HTMLTableElement, account: Account
+        fundInfo: FundInfo, table: HTMLTableElement, i: number, account: Account
       ) {
         const {account_id} = account.base;
         const name_html =
@@ -489,15 +481,15 @@
           : `${(powerEffective(account) * 100).toFixed(2)}%`;
 
         const tr = table.appendChild(document.createElement('tr'));
-        // TODO calculate Rank for accounts, starts from 1
-        tr.appendChild(document.createElement('td')).innerText = '0';
+        tr.appendChild(document.createElement('td')).innerText = i.toString();
 
         // TODO show it only to signers of issuer
         const power_td = tr.appendChild(document.createElement('td'));
         power_td.classList.add('power');
         power_td.innerHTML = power_html;
 
-        tr.appendChild(document.createElement('td')).innerText = 'S';
+        tr.appendChild(document.createElement('td')).innerText =
+          i <= 19 ? 'Signer' : 'Holder';
         tr.appendChild(document.createElement('td')).innerHTML = name_html;
         tr.appendChild(document.createElement('td')).innerText =
           account.balance.toString();
@@ -513,10 +505,11 @@
           .values(fundInfo.holderDict)
           .sort((a, b) => powerEffective(b) - powerEffective(a));
 
-        for (const account of holders) {
-          if (account.base.account_id != MTL_TREASURY)
-            appendHoldersTableRow(fundInfo, table, account);
-        }
+        holders
+          .filter(account => account.base.account_id != MTL_TREASURY)
+          .forEach((account, i) =>
+            appendHoldersTableRow(fundInfo, table, i + 1, account)
+          );
       }
 
       async function getDelegations(asset: Asset): Promise<Delegations> {
