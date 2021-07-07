@@ -480,6 +480,15 @@
           ? `<s title="Delegated">${(power(account) * 100).toFixed(2)}%</s>`
           : `${(powerEffective(account) * 100).toFixed(2)}%`;
 
+        const weight =
+          Math.round(
+            ( (power(account) && powerEffective(account) == 0)
+              ? power(account)
+              : powerEffective(account)
+            )
+            * 100
+          );
+
         const tr = table.appendChild(document.createElement('tr'));
         tr.appendChild(document.createElement('td')).innerText = i.toString();
 
@@ -489,7 +498,7 @@
         power_td.innerHTML = power_html;
 
         tr.appendChild(document.createElement('td')).innerText =
-          i <= 19 ? 'Signer' : 'Holder';
+          i <= 19 ? `Signer (${weight})` : 'Holder';
         tr.appendChild(document.createElement('td')).innerHTML = name_html;
         tr.appendChild(document.createElement('td')).innerText =
           account.balance.toString();
