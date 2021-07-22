@@ -498,7 +498,7 @@
         power_td.innerHTML = power_html;
 
         tr.appendChild(document.createElement('td')).innerText =
-          i <= 19 ? `Signer (${weight})` : 'Holder';
+          (i <= 19) && (powerEffective(account) * 100 >= 0.5) ? `Signer (${weight})` : 'Holder';
         tr.appendChild(document.createElement('td')).innerHTML = name_html;
         tr.appendChild(document.createElement('td')).innerText =
           account.balance.toString();
@@ -515,7 +515,7 @@
           .sort((a, b) => powerEffective(b) - powerEffective(a));
 
         holders
-          .filter(account => account.base.account_id != MTL_TREASURY)
+          .filter(account => (account.base.account_id != MTL_TREASURY) && (account.balance > 0))
           .forEach((account, i) =>
             appendHoldersTableRow(fundInfo, table, i + 1, account)
           );
