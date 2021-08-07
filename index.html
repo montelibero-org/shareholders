@@ -262,8 +262,7 @@
           Promise<StellarSdk.AccountRecord[]>
         {
           const page = await p;
-          console.log(page);
-          if (page.records.length < FETCH_LIMIT && page.records.length > 0)
+          if (page.records.length == FETCH_LIMIT)
             return page.records.concat(await go(page.next()));
           else
             return page.records;
@@ -271,6 +270,31 @@
 
         return go(
           Server.accounts().forAsset(asset.base).limit(FETCH_LIMIT).call()
+        );
+      }
+
+      async function
+      asset_fetch_all_payments(asset: Asset): Promise<StellarSdk.Operation[]> {
+        const BASE_URL = 'https://api.stellar.expert';
+        const FETCH_LIMIT = 200;
+
+        async function go(req: String): Promise<StellarSdk.Operation[]> {
+          const response = await fetch(BASE_URL + req);
+          const page = await response.json();
+          const records = page._embedded.records;
+          if (records.length == FETCH_LIMIT)
+            return records.concat(await go(page._links.next.href));
+          else
+            return records;
+        }
+
+        return go(
+          '/explorer/public/payments?' +
+          [ `asset=${asset.code}-${asset.issuer}`,
+            `limit=${FETCH_LIMIT}`,
+            'order=desc',
+            ]
+            .join('&')
         );
       }
 
@@ -534,14 +558,8 @@
       }
 
       async function getDelegations(asset: Asset): Promise<Delegations> {
-        const response =
-          await
-            fetch(
-              'https://api.stellar.expert/explorer/public/payments?' +
-              `asset=${asset.code}-${asset.issuer}&limit=200&order=desc`
-            );
-        const responseJson = await response.json();
-        const payments: StellarSdk.Operation[] = responseJson._embedded.records;
+        const payments: StellarSdk.Operation[] =
+          await asset_fetch_all_payments(asset);
 
         let sources: Record<string, StellarSdk.Operation | null> = {};
         let targets: Record<string, Record<string, StellarSdk.Operation>> = {};
