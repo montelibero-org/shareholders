@@ -50,7 +50,8 @@
               </a>
             </p>
             <p>Supply: <span id="mtl_supply_text">0</span></p>
-            <p>Distributed: <span id="mtl_distributed_text">0</span></p>
+            <p>To delegate your vote power, send any amount of MTL to your representative and add "<b>delegate</b>" to the transaction memo.</p>
+            <p>To revoke previously delegated your vote power, send any amount of MTL to your representative and add “<b>undelegate</b>” to the transaction memo.</p>
             <table class="table table-striped" id="mtl_holders_table">
               <thead>
                 <tr>
@@ -80,6 +81,8 @@
               </a>
             </p>
             <p>Supply: <span id="mtlcity_supply_text">0</span></p>
+            <p>To delegate your vote power, send any amount of MTLCITY to your representative and add "<b>delegate</b>" to the transaction memo.</p>
+            <p>To revoke previously delegated your vote power, send any amount of MTLCITY to your representative and add “<b>undelegate</b>” to the transaction memo.</p>
             <table class="table table-striped" id="mtlcity_holders_table">
               <thead>
                 <tr>
@@ -584,7 +587,6 @@
       }
 
       // HTML bindings
-      declare const mtl_distributed_text: HTMLSpanElement;
       declare const mtl_holders_table: HTMLTableElement;
       declare const mtl_supply_text: HTMLSpanElement;
       declare const mtlcity_holders_table: HTMLTableElement;
@@ -593,7 +595,7 @@
       // entry point
       (async () => {
         const mtlFundInfo = await getFundInfo(MTL);
-        setHoldersStats(mtlFundInfo, mtl_supply_text, mtl_distributed_text);
+        setHoldersStats(mtlFundInfo, mtl_supply_text);
         makeHoldersTable(mtlFundInfo, mtl_holders_table);
         const mtlcityFundInfo = await getFundInfo(MTLCITY);
         setHoldersStats(mtlcityFundInfo, mtlcity_supply_text);
